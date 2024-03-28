@@ -3,11 +3,11 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 
-internal class ModuleCreater : MonoBehaviour
+public class ModuleCreater : MonoBehaviour
 {
-    private GameObject targetObject; 
+    public GameObject targetObject; 
 
-    private void CheckAndCopyBones()
+    public void CheckAndCopyBones()
     {
         if (targetObject == null)
         {
@@ -23,7 +23,7 @@ internal class ModuleCreater : MonoBehaviour
 
         RemoveComponents(new_root);
 
-        CreatePrefabFromObject(new_root, "Assets/ModuleCreater");
+        CreatePrefabFromObject(new_root, "Assets/ModuleCreater/output");
 
     }
 
@@ -182,7 +182,7 @@ internal class ModuleCreater : MonoBehaviour
     }
 
     // 指定されたオブジェクトとそのすべての子オブジェクトのリスト内でのインデックスを返す
-    public List<int> GetObjectAndChildrenIndexes(GameObject obj, List<GameObject> list)
+    private List<int> GetObjectAndChildrenIndexes(GameObject obj, List<GameObject> list)
     {
         List<int> indexes = new List<int>();
         AddObjectAndChildrenIndexes(obj, list, indexes);
