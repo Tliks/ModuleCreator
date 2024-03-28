@@ -3,11 +3,11 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 
-public class ModuleCreater : MonoBehaviour
+internal class ModuleCreater : MonoBehaviour
 {
-    public GameObject targetObject; 
+    private GameObject targetObject; 
 
-    public void CheckAndCopyBones()
+    private void CheckAndCopyBones()
     {
         if (targetObject == null)
         {
@@ -143,7 +143,7 @@ public class ModuleCreater : MonoBehaviour
         return depth;
     }
 
-    public static void CreatePrefabFromObject(GameObject obj, string BasePath)
+    private static void CreatePrefabFromObject(GameObject obj, string BasePath)
     {
         string savePath = $"{BasePath}/{obj.name}.prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(obj, savePath);
@@ -159,7 +159,7 @@ public class ModuleCreater : MonoBehaviour
         }
     }
 
-    public List<GameObject> GetAllObjects(GameObject parent)
+    private List<GameObject> GetAllObjects(GameObject parent)
     {
         List<GameObject> objects = new List<GameObject>();
         AddChildrenRecursive(parent, objects);
@@ -176,7 +176,7 @@ public class ModuleCreater : MonoBehaviour
     }
 
     // 指定されたオブジェクトのリスト内でのインデックスを返す
-    public int GetObjectIndex(GameObject obj, List<GameObject> list)
+    private int GetObjectIndex(GameObject obj, List<GameObject> list)
     {
         return list.IndexOf(obj);
     }
@@ -202,7 +202,7 @@ public class ModuleCreater : MonoBehaviour
             AddObjectAndChildrenIndexes(child.gameObject, list, indexes);
         }
     }
-    public void RemoveComponents(GameObject targetGameObject)
+    private void RemoveComponents(GameObject targetGameObject)
     {
         Component[] components = targetGameObject.GetComponents<Component>();
 
