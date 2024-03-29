@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using VRC.SDK3.Dynamics.PhysBone.Components;
 
 public class ModuleCreater : MonoBehaviour
 {
@@ -107,24 +108,35 @@ public class ModuleCreater : MonoBehaviour
 
         GameObject skin = AllChildren[skin_index];
         HashSet<GameObject> weightedBoneNames = CheckBoneWeight(skin);
-        CheckAndDeleteRecursive(new_root, weightedBoneNames, skin);
+        (HashSet<GameObject> PBComponents, HashSet<GameObject> ObjectsUnderPB) = FindObjectsUnderPB(new_root, weightedBoneNames);
+        CheckAndDeleteRecursive(new_root, weightedBoneNames, skin, ObjectsUnderPB, PBComponents);
     }
 
-    private void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> validNames, GameObject skin)
+    private void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> weightedBoneNames, GameObject skin, HashSet<GameObject> ObjectsUnderPB, HashSet<GameObject> PBComponents)
     {   
         List<GameObject> children = GetChildren(obj);
 
         // 子オブジェクトに対して再帰的に処理を適用
         foreach (GameObject child in children)
         {
-            CheckAndDeleteRecursive(child, validNames, skin);
+            CheckAndDeleteRecursive(child, weightedBoneNames, skin, ObjectsUnderPB, PBComponents);
         }
 
         // 子オブジェクトがない、指定のメッシュにウェイトを付けていない、指定のメッシュでない条件を全て満たす場合、オブジェクトを削除
-        if (obj.transform.childCount == 0 && !validNames.Contains(obj) && obj != skin)
+        if (obj == skin || PBComponents.Contains(obj))
         {
-            DestroyImmediate(obj);
+            return;
         }
+        if (ObjectsUnderPB.Contains(obj) || weightedBoneNames.Contains(obj))
+        {
+            return;
+        }
+        if (obj.transform.childCount != 0)
+        {
+            return;
+        }
+
+        DestroyImmediate(obj);
     }
 
     private static void CreatePrefabFromObject(GameObject obj, string BasePath)
@@ -195,6 +207,54 @@ public class ModuleCreater : MonoBehaviour
             }
         }
         return objectsWithComponent;
+    }
+
+    private (HashSet<GameObject>, HashSet<GameObject>) FindObjectsUnderPB(GameObject root_obj, HashSet<GameObject> weightedBoneNames)
+    {   
+        HashSet<GameObject> AllObjectsUnderPB = new HashSet<GameObject>();
+        HashSet<GameObject> PBComponents = new HashSet<GameObject>();
+        List<GameObject> AllChildren = GetAllChildren(root_obj);
+
+        foreach (GameObject obj in AllChildren)
+        {   
+            var physBone = obj.GetComponent<VRCPhysBone>();
+            var physBoneCollider = obj.GetComponent<VRCPhysBoneCollider>();
+
+            if (physBone != null && physBone.rootTransform != null) 
+            {   
+                GameObject rootBone = physBone.rootTransform.gameObject;
+                if (weightedBoneNames.Contains(rootBone))
+                {
+                    //Debug.Log("PB"+rootBone.name);
+                    PBComponents.Add(obj);
+                    List<GameObject> ObjectsUnderPB = GetAllChildren(rootBone);
+                    AllObjectsUnderPB.UnionWith(ObjectsUnderPB); 
+                }
+                //Debug.Log(ObjectsUnderPB.Count);
+            }
+            
+            if (physBoneCollider != null && physBoneCollider.rootTransform != null)
+            {
+                GameObject rootBone = physBoneCollider.rootTransform.gameObject;
+                if (weightedBoneNames.Contains(obj))
+                {   
+                    PBComponents.Add(obj);
+                    AllObjectsUnderPB.Add(rootBone); 
+                }
+                //Debug.Log("PBC"+rootBone.name);
+                //List<GameObject> ObjectsUnderPB = GetAllChildren(rootBone);
+                //Debug.Log(ObjectsUnderPB.Count);
+            }
+
+        }
+        // 結果の表示（オプション）
+        foreach (GameObject obj in AllObjectsUnderPB)
+        {
+            //Debug.Log(obj.name);
+        }
+        Debug.Log(AllObjectsUnderPB.Count);
+
+        return (PBComponents, AllObjectsUnderPB);
     }
 
 }
