@@ -146,12 +146,10 @@ public class ModuleCreater : MonoBehaviour
     private static void CreatePrefabFromObject(GameObject obj, string BasePath)
     {
         string savePath = $"{BasePath}/{obj.name}.prefab";
-        GameObject prefab = PrefabUtility.SaveAsPrefabAsset(obj, savePath);
+        GameObject prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(obj, savePath, InteractionMode.UserAction);
         if (prefab != null)
         {
-            Debug.Log(obj.name + "からPrefabが作成され、保存されました: " + savePath);
-            PrefabUtility.InstantiatePrefab(prefab);
-            DestroyImmediate(obj);
+            Debug.Log(obj.name + "が保存されました: " + savePath);
         }
         else
         {
