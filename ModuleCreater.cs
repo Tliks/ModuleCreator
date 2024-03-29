@@ -97,50 +97,29 @@ public class ModuleCreater : MonoBehaviour
 
         // 不要なオブジェクトを削除
         HashSet<GameObject> weightedBoneNames = CheckBoneWeight(skin);
-        CleanUpArmature(new_root, weightedBoneNames, skin);
+        CheckAndDeleteRecursive(new_root, weightedBoneNames, skin);
     }
 
-    private void CleanUpArmature(GameObject root, HashSet<GameObject> validNames, GameObject skin)
-    {
-        List<GameObject> allChildren = GetAllObjects(root);
-
-        var objectsWithDepth = new List<(GameObject obj, int depth)>();
-
-        foreach (var obj in allChildren)
+    private void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> validNames, GameObject skin)
+    {   
+        List<GameObject> children = new List<GameObject>();
+        foreach (Transform child in obj.transform)
         {
-            int depth = CalculateDepth(obj.transform);
-            objectsWithDepth.Add((obj, depth));
+            children.Add(child.gameObject);
         }
 
-        // 階層深度が深い順にソート
-        var sortedByDepth = objectsWithDepth.OrderByDescending(x => x.depth).ToList();
-
-        foreach (var item in sortedByDepth)
+        // 子オブジェクトに対して再帰的に処理を適用
+        foreach (GameObject child in children)
         {
-            GameObject obj = item.obj;
-
-
-            // 削除の条件
-            if (obj.transform.childCount == 0 && !validNames.Contains(obj) && obj!= skin)
-            {
-                if (obj.transform.parent != null)
-                {
-                    DestroyImmediate(obj);
-                }
-            }
+            CheckAndDeleteRecursive(child, validNames, skin);
         }
-    }
 
-    // オブジェクトの階層深度を計算
-    private int CalculateDepth(Transform obj)
-    {
-        int depth = 0;
-        while (obj.parent != null)
+        // 子オブジェクトがない、validNamesに含まれない、かつskinオブジェクトでない場合、objを削除
+        if (obj.transform.childCount == 0 && !validNames.Contains(obj) && obj != skin)
         {
-            depth++;
-            obj = obj.parent;
+            DestroyImmediate(obj);
         }
-        return depth;
+
     }
 
     private static void CreatePrefabFromObject(GameObject obj, string BasePath)
