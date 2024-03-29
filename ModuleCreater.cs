@@ -7,7 +7,7 @@ public class ModuleCreater : MonoBehaviour
 {
     public GameObject targetObject; 
 
-    public void CheckAndCopyBones()
+    public void main()
     {
         if (targetObject == null)
         {
@@ -15,6 +15,21 @@ public class ModuleCreater : MonoBehaviour
             return;
         }
 
+        CheckAndCopyBones(targetObject);
+    }
+
+    public void main_All()
+    {
+        HashSet<GameObject> skins = FindObjectsWithComponent<SkinnedMeshRenderer>(this.gameObject);
+        foreach (GameObject skin in skins)
+        {
+            CheckAndCopyBones(skin);
+        }
+    }
+
+
+    private void CheckAndCopyBones(GameObject targetObject)
+    {
         int skin_index = CheckObjects(this.gameObject, targetObject);
 
         GameObject new_root = CopyRootObject(this.gameObject, $"{targetObject.name}_MA");
@@ -165,4 +180,21 @@ public class ModuleCreater : MonoBehaviour
             }
         }
     }
+
+    private HashSet<GameObject> FindObjectsWithComponent<T>(GameObject rootObj) where T : Component
+    {
+        HashSet<GameObject> objectsWithComponent = new HashSet<GameObject>();
+        List<GameObject> allChildren = GetAllChildren(rootObj);
+
+        foreach (GameObject obj in allChildren)
+        {
+            T component = obj.GetComponent<T>();
+            if (component != null)
+            {
+                objectsWithComponent.Add(obj);
+            }
+        }
+        return objectsWithComponent;
+    }
+
 }

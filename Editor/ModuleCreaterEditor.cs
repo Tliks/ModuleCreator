@@ -12,7 +12,14 @@ public class ModuleCreaterEditor : Editor
 
         if (GUILayout.Button("Create Module"))
         {
-            script.CheckAndCopyBones();
+            script.main();
         }
+
+        if (GUILayout.Button("Create All Module"))
+        {
+            script.main_All();
+        }
+
+    
     }
 }
