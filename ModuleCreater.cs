@@ -15,11 +15,11 @@ public class ModuleCreater : MonoBehaviour
             return;
         }
 
-        var (armature_indexs, skin_index) = FindObjects(this.gameObject, targetObject);
+        int skin_index = CheckObjects(this.gameObject, targetObject);
 
         GameObject new_root = CopyRootObject(this.gameObject, $"{targetObject.name}_MA");
 
-        CleanUpHierarchy(new_root, armature_indexs, skin_index);
+        CleanUpHierarchy(new_root, skin_index);
 
         RemoveComponents(new_root);
 
@@ -27,9 +27,9 @@ public class ModuleCreater : MonoBehaviour
 
     }
 
-    private (List<int>, int) FindObjects(GameObject root_obj, GameObject targetObject)
+    private int CheckObjects(GameObject root_obj, GameObject targetObject)
     {
-        List<GameObject> AllObjects = GetAllObjects(root_obj);
+        List<GameObject> AllChildren = GetAllChildren(root_obj);
 
         GameObject armature = root_obj.transform.Find("Armature")?.gameObject;
         if (armature == null)
@@ -37,7 +37,7 @@ public class ModuleCreater : MonoBehaviour
             Debug.LogError("Armature object not found under the target object.");
         }
 
-        List<int> armature_indexs = GetObjectAndChildrenIndexes(armature, AllObjects);
+        //List<int> armature_indexs = GetObjectAndChildrenIndexes(armature, AllChildren);
 
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer == null)
@@ -45,9 +45,9 @@ public class ModuleCreater : MonoBehaviour
             Debug.LogError("The target object does not have a SkinnedMeshRenderer.");
         }
 
-        int skin_index = GetObjectIndex(targetObject, AllObjects);
+        int skin_index = AllChildren.IndexOf(targetObject);
 
-        return (armature_indexs, skin_index);
+        return skin_index;
     }
 
     private HashSet<GameObject> CheckBoneWeight(GameObject targetObject)
@@ -86,27 +86,19 @@ public class ModuleCreater : MonoBehaviour
         return new_root;
     }
 
-    private void CleanUpHierarchy(GameObject new_root, List<int> armature_indexs, int skin_index)
+    private void CleanUpHierarchy(GameObject new_root, int skin_index)
     {   
 
-        List<GameObject> AllObjects = GetAllObjects(new_root);
+        List<GameObject> AllChildren = GetAllChildren(new_root);
 
-        List<GameObject> armatures = armature_indexs.Select(index => AllObjects[index]).ToList();
-        GameObject armature = armatures[0];
-        GameObject skin = AllObjects[skin_index];
-
-        // 不要なオブジェクトを削除
+        GameObject skin = AllChildren[skin_index];
         HashSet<GameObject> weightedBoneNames = CheckBoneWeight(skin);
         CheckAndDeleteRecursive(new_root, weightedBoneNames, skin);
     }
 
     private void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> validNames, GameObject skin)
     {   
-        List<GameObject> children = new List<GameObject>();
-        foreach (Transform child in obj.transform)
-        {
-            children.Add(child.gameObject);
-        }
+        List<GameObject> children = GetChildren(obj);
 
         // 子オブジェクトに対して再帰的に処理を適用
         foreach (GameObject child in children)
@@ -136,49 +128,32 @@ public class ModuleCreater : MonoBehaviour
         }
     }
 
-    private List<GameObject> GetAllObjects(GameObject parent)
+    private List<GameObject> GetChildren(GameObject parent)
     {
-        List<GameObject> objects = new List<GameObject>();
-        AddChildrenRecursive(parent, objects);
-        return objects;
+        List<GameObject> children = new List<GameObject>();
+        foreach (Transform child in parent.transform)
+        {
+            children.Add(child.gameObject);
+        }
+        return children;
     }
 
-    private void AddChildrenRecursive(GameObject obj, List<GameObject> list)
+    private List<GameObject> GetAllChildren(GameObject parent)
     {
-        list.Add(obj);
-        foreach (Transform child in obj.transform)
+        List<GameObject> children = new List<GameObject>();
+        AddChildrenRecursive(parent, children);
+        return children;
+    }
+
+    private void AddChildrenRecursive(GameObject parent, List<GameObject> children)
+    {
+        children.Add(parent);
+        foreach (Transform child in parent.transform)
         {
-            AddChildrenRecursive(child.gameObject, list);
+            AddChildrenRecursive(child.gameObject, children);
         }
     }
 
-    // 指定されたオブジェクトのリスト内でのインデックスを返す
-    private int GetObjectIndex(GameObject obj, List<GameObject> list)
-    {
-        return list.IndexOf(obj);
-    }
-
-    // 指定されたオブジェクトとそのすべての子オブジェクトのリスト内でのインデックスを返す
-    private List<int> GetObjectAndChildrenIndexes(GameObject obj, List<GameObject> list)
-    {
-        List<int> indexes = new List<int>();
-        AddObjectAndChildrenIndexes(obj, list, indexes);
-        return indexes;
-    }
-
-    private void AddObjectAndChildrenIndexes(GameObject obj, List<GameObject> list, List<int> indexes)
-    {
-        int index = list.IndexOf(obj);
-        if (index != -1)
-        {
-            indexes.Add(index);
-        }
-
-        foreach (Transform child in obj.transform)
-        {
-            AddObjectAndChildrenIndexes(child.gameObject, list, indexes);
-        }
-    }
     private void RemoveComponents(GameObject targetGameObject)
     {
         Component[] components = targetGameObject.GetComponents<Component>();
