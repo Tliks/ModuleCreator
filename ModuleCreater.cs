@@ -24,7 +24,6 @@ public class ModuleCreater : MonoBehaviour
         RemoveComponents(new_root);
 
         CreatePrefabFromObject(new_root, "Assets/ModuleCreater/output");
-
     }
 
     private int CheckObjects(GameObject root_obj, GameObject targetObject)
@@ -106,12 +105,11 @@ public class ModuleCreater : MonoBehaviour
             CheckAndDeleteRecursive(child, validNames, skin);
         }
 
-        // 子オブジェクトがない、validNamesに含まれない、かつskinオブジェクトでない場合、objを削除
+        // 子オブジェクトがない、指定のメッシュにウェイトを付けていない、指定のメッシュでない条件を全て満たす場合、オブジェクトを削除
         if (obj.transform.childCount == 0 && !validNames.Contains(obj) && obj != skin)
         {
             DestroyImmediate(obj);
         }
-
     }
 
     private static void CreatePrefabFromObject(GameObject obj, string BasePath)
@@ -158,18 +156,12 @@ public class ModuleCreater : MonoBehaviour
     {
         Component[] components = targetGameObject.GetComponents<Component>();
 
-        
         foreach (var component in components)
         {
             // コンポーネントがTransform以外の場合、削除
             if (!(component is Transform))
             {
-                //Debug.LogError($"d{component.name}");
                 DestroyImmediate(component);
-            }
-            else
-            {
-                //Debug.LogError($"s{component.name}");
             }
         }
     }
