@@ -49,7 +49,11 @@ public class ModuleCreater : MonoBehaviour
         GameObject armature = root_obj.transform.Find("Armature")?.gameObject;
         if (armature == null)
         {
-            Debug.LogError("Armature object not found under the target object.");
+            armature = root_obj.transform.Find("armature")?.gameObject;
+            if (armature == null)
+            {
+                Debug.LogError("Armature object not found under the root object.");
+            }
         }
 
         //List<int> armature_indexs = GetObjectAndChildrenIndexes(armature, AllChildren);
