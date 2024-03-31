@@ -17,7 +17,7 @@ public class ModuleCreater : MonoBehaviour
 
         int skin_index = CheckObjects(this.gameObject, targetObject);
 
-        GameObject new_root = CopyRootObject(this.gameObject, $"{targetObject.name}_MA");
+        GameObject new_root = CopyRootObject(this.gameObject, $"{this.gameObject.name}_{targetObject.name}_MA");
 
         CleanUpHierarchy(new_root, skin_index);
 
