@@ -1,8 +1,8 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 using VRC.SDK3.Dynamics.PhysBone.Components;
+using Unity.VisualScripting;
 
 [CustomEditor(typeof(ModuleCreater))]
 public class ModuleCreater : Editor
@@ -10,7 +10,7 @@ public class ModuleCreater : Editor
     private const int PRIORITY = 50;
     
     [MenuItem("GameObject/Module Creater/Create Module", false, PRIORITY)]
-    public static void main(MenuCommand menuCommand)
+    private static void main(MenuCommand menuCommand)
     {
         GameObject targetObject = menuCommand.context as GameObject;
 
@@ -40,7 +40,7 @@ public class ModuleCreater : Editor
 
     private static int CheckObjects(GameObject root_obj, GameObject targetObject)
     {
-        List<GameObject> AllChildren = GetAllChildren(root_obj);
+        Transform[] AllChildren = GetAllChildren(root_obj);
 
         GameObject armature = root_obj.transform.Find("Armature")?.gameObject;
         if (armature == null)
@@ -60,7 +60,7 @@ public class ModuleCreater : Editor
             Debug.LogError("The target object does not have a SkinnedMeshRenderer.");
         }
 
-        int skin_index = AllChildren.IndexOf(targetObject);
+        int skin_index = System.Array.IndexOf(AllChildren, targetObject.transform);
 
         return skin_index;
     }
@@ -71,12 +71,12 @@ public class ModuleCreater : Editor
         // 指定のメッシュにウェイトを付けてるボーンの一覧を取得
         HashSet<GameObject> weightedBones = GetWeightedBones(skinnedMeshRenderer);
 
-        foreach (GameObject weightedBoneName in weightedBones)
+        foreach (GameObject weightedBone in weightedBones)
         {
             //Debug.Log($"WeightedBone: {weightedBoneName}");
         } 
         
-        Debug.Log($"bones count: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
+        Debug.Log($"weightedBones: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
         return weightedBones;
     }
 
@@ -104,30 +104,30 @@ public class ModuleCreater : Editor
     private static void CleanUpHierarchy(GameObject new_root, int skin_index)
     {   
 
-        List<GameObject> AllChildren = GetAllChildren(new_root);
+        Transform[] AllChildren = GetAllChildren(new_root);
 
-        GameObject skin = AllChildren[skin_index];
-        HashSet<GameObject> weightedBoneNames = CheckBoneWeight(skin);
-        (HashSet<GameObject> PBComponents, HashSet<GameObject> ObjectsUnderPB) = FindObjectsUnderPB(new_root, weightedBoneNames);
-        CheckAndDeleteRecursive(new_root, weightedBoneNames, skin, ObjectsUnderPB, PBComponents);
+        GameObject skin = AllChildren[skin_index].gameObject;
+        HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
+        (HashSet<GameObject> PBObjects, HashSet<Transform> All_PB_Transforms) = Find_PB_Transforms(new_root, weightedBones);
+        CheckAndDeleteRecursive(new_root, weightedBones, skin, All_PB_Transforms, PBObjects);
     }
 
-    private static void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> weightedBoneNames, GameObject skin, HashSet<GameObject> ObjectsUnderPB, HashSet<GameObject> PBComponents)
+    private static void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> weightedBones, GameObject skin, HashSet<Transform> All_PB_Transforms, HashSet<GameObject> PBObjects)
     {   
         List<GameObject> children = GetChildren(obj);
 
         // 子オブジェクトに対して再帰的に処理を適用
         foreach (GameObject child in children)
-        {
-            CheckAndDeleteRecursive(child, weightedBoneNames, skin, ObjectsUnderPB, PBComponents);
+        {   
+            CheckAndDeleteRecursive(child, weightedBones, skin, All_PB_Transforms, PBObjects);
         }
 
-        // 子オブジェクトがない、指定のメッシュにウェイトを付けていない、指定のメッシュでない条件を全て満たす場合、オブジェクトを削除
-        if (obj == skin || PBComponents.Contains(obj))
-        {
+        // 削除しない条件
+        if (obj == skin || PBObjects.Contains(obj))
+        {   
             return;
         }
-        if (ObjectsUnderPB.Contains(obj) || weightedBoneNames.Contains(obj))
+        if (All_PB_Transforms.Contains(obj.transform) || weightedBones.Contains(obj))
         {
             return;
         }
@@ -145,7 +145,7 @@ public class ModuleCreater : Editor
         GameObject prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(obj, savePath, InteractionMode.UserAction);
         if (prefab != null)
         {
-            Debug.Log(obj.name + "が保存されました: " + savePath);
+            Debug.Log(savePath + "にPrefabが保存されました");
         }
         else
         {
@@ -163,20 +163,10 @@ public class ModuleCreater : Editor
         return children;
     }
 
-    private static List<GameObject> GetAllChildren(GameObject parent)
+    private static Transform[] GetAllChildren(GameObject parent)
     {
-        List<GameObject> children = new List<GameObject>();
-        AddChildrenRecursive(parent, children);
+        Transform[] children = parent.GetComponentsInChildren<Transform>();
         return children;
-    }
-
-    private static void AddChildrenRecursive(GameObject parent, List<GameObject> children)
-    {
-        children.Add(parent);
-        foreach (Transform child in parent.transform)
-        {
-            AddChildrenRecursive(child.gameObject, children);
-        }
     }
 
     private static void RemoveComponents(GameObject targetGameObject)
@@ -193,68 +183,37 @@ public class ModuleCreater : Editor
         }
     }
 
-    private static HashSet<GameObject> FindObjectsWithComponent<T>(GameObject rootObj) where T : Component
-    {
-        HashSet<GameObject> objectsWithComponent = new HashSet<GameObject>();
-        List<GameObject> allChildren = GetAllChildren(rootObj);
-
-        foreach (GameObject obj in allChildren)
-        {
-            T component = obj.GetComponent<T>();
-            if (component != null)
-            {
-                objectsWithComponent.Add(obj);
-            }
-        }
-        return objectsWithComponent;
-    }
-
-    private static (HashSet<GameObject>, HashSet<GameObject>) FindObjectsUnderPB(GameObject root_obj, HashSet<GameObject> weightedBoneNames)
+    private static (HashSet<GameObject>, HashSet<Transform>) Find_PB_Transforms(GameObject root_obj, HashSet<GameObject> weightedBones)
     {   
-        HashSet<GameObject> AllObjectsUnderPB = new HashSet<GameObject>();
-        HashSet<GameObject> PBComponents = new HashSet<GameObject>();
-        List<GameObject> AllChildren = GetAllChildren(root_obj);
-
-        foreach (GameObject obj in AllChildren)
+        HashSet<GameObject> PBObjects = new HashSet<GameObject>();
+        HashSet<Transform> All_PB_Transforms = new HashSet<Transform>();
+        
+        VRCPhysBone[] physBones = root_obj.GetComponentsInChildren<VRCPhysBone>();
+        foreach (VRCPhysBone physBone in physBones)
         {   
-            var physBone = obj.GetComponent<VRCPhysBone>();
-            var physBoneCollider = obj.GetComponent<VRCPhysBoneCollider>();
-
-            if (physBone != null && physBone.rootTransform != null) 
+            GameObject rootBone;
+            if (physBone.rootTransform != null) 
             {   
-                GameObject rootBone = physBone.rootTransform.gameObject;
-                if (weightedBoneNames.Contains(rootBone))
-                {
-                    //Debug.Log("PB"+rootBone.name);
-                    PBComponents.Add(obj);
-                    List<GameObject> ObjectsUnderPB = GetAllChildren(rootBone);
-                    AllObjectsUnderPB.UnionWith(ObjectsUnderPB); 
-                }
-                //Debug.Log(ObjectsUnderPB.Count);
+                rootBone = physBone.rootTransform.gameObject;
+            }
+            else
+            {
+                rootBone = root_obj;
             }
             
-            if (physBoneCollider != null && physBoneCollider.rootTransform != null)
+            Transform[] PB_Transforms = GetAllChildren(rootBone);
+
+            foreach (Transform PB_Transform in PB_Transforms)
             {
-                GameObject rootBone = physBoneCollider.rootTransform.gameObject;
-                if (weightedBoneNames.Contains(obj))
-                {   
-                    PBComponents.Add(obj);
-                    AllObjectsUnderPB.Add(rootBone); 
+                if (weightedBones.Contains(PB_Transform.gameObject))
+                {
+                    PBObjects.Add(physBone.gameObject);
+                    All_PB_Transforms.UnionWith(PB_Transforms);
+                    break;
                 }
-                //Debug.Log("PBC"+rootBone.name);
-                //List<GameObject> ObjectsUnderPB = GetAllChildren(rootBone);
-                //Debug.Log(ObjectsUnderPB.Count);
             }
-
         }
-        // 結果の表示（オプション）
-        foreach (GameObject obj in AllObjectsUnderPB)
-        {
-            //Debug.Log(obj.name);
-        }
-        Debug.Log(AllObjectsUnderPB.Count);
-
-        return (PBComponents, AllObjectsUnderPB);
+        return (PBObjects, All_PB_Transforms);
     }
 
 }
