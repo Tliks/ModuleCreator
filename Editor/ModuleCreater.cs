@@ -1,15 +1,19 @@
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 
-public class ModuleCreater : MonoBehaviour
+[CustomEditor(typeof(ModuleCreater))]
+public class ModuleCreater : Editor
 {
-    public GameObject targetObject; 
-
-    public void main()
+    private const int PRIORITY = 50;
+    
+    [MenuItem("GameObject/Module Creater/Create Module", false, PRIORITY)]
+    public static void main(MenuCommand menuCommand)
     {
+        GameObject targetObject = menuCommand.context as GameObject;
+
         if (targetObject == null)
         {
             Debug.LogError("Target object is not set.");
@@ -19,21 +23,13 @@ public class ModuleCreater : MonoBehaviour
         CheckAndCopyBones(targetObject);
     }
 
-    public void main_All()
-    {
-        HashSet<GameObject> skins = FindObjectsWithComponent<SkinnedMeshRenderer>(this.gameObject);
-        foreach (GameObject skin in skins)
-        {
-            CheckAndCopyBones(skin);
-        }
-    }
+    private static void CheckAndCopyBones(GameObject targetObject)
+    {   
+        GameObject root =  targetObject.transform.parent.gameObject;
 
+        int skin_index = CheckObjects(root, targetObject);
 
-    private void CheckAndCopyBones(GameObject targetObject)
-    {
-        int skin_index = CheckObjects(this.gameObject, targetObject);
-
-        GameObject new_root = CopyRootObject(this.gameObject, $"{this.gameObject.name}_{targetObject.name}_MA");
+        GameObject new_root = CopyRootObject(root, $"{root.name}_{targetObject.name}_MA");
 
         CleanUpHierarchy(new_root, skin_index);
 
@@ -42,7 +38,7 @@ public class ModuleCreater : MonoBehaviour
         CreatePrefabFromObject(new_root, "Assets/ModuleCreater/output");
     }
 
-    private int CheckObjects(GameObject root_obj, GameObject targetObject)
+    private static int CheckObjects(GameObject root_obj, GameObject targetObject)
     {
         List<GameObject> AllChildren = GetAllChildren(root_obj);
 
@@ -69,7 +65,7 @@ public class ModuleCreater : MonoBehaviour
         return skin_index;
     }
 
-    private HashSet<GameObject> CheckBoneWeight(GameObject targetObject)
+    private static HashSet<GameObject> CheckBoneWeight(GameObject targetObject)
     {   
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         // 指定のメッシュにウェイトを付けてるボーンの一覧を取得
@@ -84,7 +80,7 @@ public class ModuleCreater : MonoBehaviour
         return weightedBones;
     }
 
-    private HashSet<GameObject> GetWeightedBones(SkinnedMeshRenderer skinnedMeshRenderer)
+    private static HashSet<GameObject> GetWeightedBones(SkinnedMeshRenderer skinnedMeshRenderer)
     {   
         BoneWeight[] boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
         HashSet<GameObject> weightedBones = new HashSet<GameObject>();
@@ -98,14 +94,14 @@ public class ModuleCreater : MonoBehaviour
         return weightedBones;
     }
 
-    private GameObject CopyRootObject(GameObject root_object, string new_name)
+    private static GameObject CopyRootObject(GameObject root_object, string new_name)
     {
         GameObject new_root = Instantiate(root_object);
         new_root.name = new_name;
         return new_root;
     }
 
-    private void CleanUpHierarchy(GameObject new_root, int skin_index)
+    private static void CleanUpHierarchy(GameObject new_root, int skin_index)
     {   
 
         List<GameObject> AllChildren = GetAllChildren(new_root);
@@ -116,7 +112,7 @@ public class ModuleCreater : MonoBehaviour
         CheckAndDeleteRecursive(new_root, weightedBoneNames, skin, ObjectsUnderPB, PBComponents);
     }
 
-    private void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> weightedBoneNames, GameObject skin, HashSet<GameObject> ObjectsUnderPB, HashSet<GameObject> PBComponents)
+    private static void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> weightedBoneNames, GameObject skin, HashSet<GameObject> ObjectsUnderPB, HashSet<GameObject> PBComponents)
     {   
         List<GameObject> children = GetChildren(obj);
 
@@ -157,7 +153,7 @@ public class ModuleCreater : MonoBehaviour
         }
     }
 
-    private List<GameObject> GetChildren(GameObject parent)
+    private static List<GameObject> GetChildren(GameObject parent)
     {
         List<GameObject> children = new List<GameObject>();
         foreach (Transform child in parent.transform)
@@ -167,14 +163,14 @@ public class ModuleCreater : MonoBehaviour
         return children;
     }
 
-    private List<GameObject> GetAllChildren(GameObject parent)
+    private static List<GameObject> GetAllChildren(GameObject parent)
     {
         List<GameObject> children = new List<GameObject>();
         AddChildrenRecursive(parent, children);
         return children;
     }
 
-    private void AddChildrenRecursive(GameObject parent, List<GameObject> children)
+    private static void AddChildrenRecursive(GameObject parent, List<GameObject> children)
     {
         children.Add(parent);
         foreach (Transform child in parent.transform)
@@ -183,7 +179,7 @@ public class ModuleCreater : MonoBehaviour
         }
     }
 
-    private void RemoveComponents(GameObject targetGameObject)
+    private static void RemoveComponents(GameObject targetGameObject)
     {
         Component[] components = targetGameObject.GetComponents<Component>();
 
@@ -197,7 +193,7 @@ public class ModuleCreater : MonoBehaviour
         }
     }
 
-    private HashSet<GameObject> FindObjectsWithComponent<T>(GameObject rootObj) where T : Component
+    private static HashSet<GameObject> FindObjectsWithComponent<T>(GameObject rootObj) where T : Component
     {
         HashSet<GameObject> objectsWithComponent = new HashSet<GameObject>();
         List<GameObject> allChildren = GetAllChildren(rootObj);
@@ -213,7 +209,7 @@ public class ModuleCreater : MonoBehaviour
         return objectsWithComponent;
     }
 
-    private (HashSet<GameObject>, HashSet<GameObject>) FindObjectsUnderPB(GameObject root_obj, HashSet<GameObject> weightedBoneNames)
+    private static (HashSet<GameObject>, HashSet<GameObject>) FindObjectsUnderPB(GameObject root_obj, HashSet<GameObject> weightedBoneNames)
     {   
         HashSet<GameObject> AllObjectsUnderPB = new HashSet<GameObject>();
         HashSet<GameObject> PBComponents = new HashSet<GameObject>();
