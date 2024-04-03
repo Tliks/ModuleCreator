@@ -2,7 +2,6 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using VRC.SDK3.Dynamics.PhysBone.Components;
-using Unity.VisualScripting;
 
 [CustomEditor(typeof(ModuleCreater))]
 public class ModuleCreater : Editor
@@ -10,7 +9,7 @@ public class ModuleCreater : Editor
     private const int PRIORITY = 50;
     
     [MenuItem("GameObject/Module Creater/Create Module", false, PRIORITY)]
-    private static void main(MenuCommand menuCommand)
+    private static void Main(MenuCommand menuCommand)
     {
         GameObject targetObject = menuCommand.context as GameObject;
 
@@ -71,11 +70,6 @@ public class ModuleCreater : Editor
         // 指定のメッシュにウェイトを付けてるボーンの一覧を取得
         HashSet<GameObject> weightedBones = GetWeightedBones(skinnedMeshRenderer);
 
-        foreach (GameObject weightedBone in weightedBones)
-        {
-            //Debug.Log($"WeightedBone: {weightedBoneName}");
-        } 
-        
         Debug.Log($"weightedBones: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
         return weightedBones;
     }
@@ -108,22 +102,22 @@ public class ModuleCreater : Editor
 
         GameObject skin = AllChildren[skin_index].gameObject;
         HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
-        (HashSet<GameObject> PBObjects, HashSet<Transform> All_PB_Transforms) = Find_PB_Transforms(new_root, weightedBones);
-        CheckAndDeleteRecursive(new_root, weightedBones, skin, All_PB_Transforms, PBObjects);
+        HashSet<Transform> All_PB_Transforms = Find_PB_Transforms(new_root, weightedBones);
+        CheckAndDeleteRecursive(new_root, weightedBones, skin, All_PB_Transforms);
     }
 
-    private static void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> weightedBones, GameObject skin, HashSet<Transform> All_PB_Transforms, HashSet<GameObject> PBObjects)
+    private static void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> weightedBones, GameObject skin, HashSet<Transform> All_PB_Transforms)
     {   
         List<GameObject> children = GetChildren(obj);
 
         // 子オブジェクトに対して再帰的に処理を適用
         foreach (GameObject child in children)
         {   
-            CheckAndDeleteRecursive(child, weightedBones, skin, All_PB_Transforms, PBObjects);
+            CheckAndDeleteRecursive(child, weightedBones, skin, All_PB_Transforms);
         }
 
         // 削除しない条件
-        if (obj == skin || PBObjects.Contains(obj))
+        if (obj == skin)
         {   
             return;
         }
@@ -183,9 +177,8 @@ public class ModuleCreater : Editor
         }
     }
 
-    private static (HashSet<GameObject>, HashSet<Transform>) Find_PB_Transforms(GameObject root_obj, HashSet<GameObject> weightedBones)
+    private static HashSet<Transform> Find_PB_Transforms(GameObject root_obj, HashSet<GameObject> weightedBones)
     {   
-        HashSet<GameObject> PBObjects = new HashSet<GameObject>();
         HashSet<Transform> All_PB_Transforms = new HashSet<Transform>();
         
         VRCPhysBone[] physBones = root_obj.GetComponentsInChildren<VRCPhysBone>();
@@ -206,14 +199,20 @@ public class ModuleCreater : Editor
             foreach (Transform PB_Transform in PB_Transforms)
             {
                 if (weightedBones.Contains(PB_Transform.gameObject))
-                {
-                    PBObjects.Add(physBone.gameObject);
+                {   
+                    All_PB_Transforms.Add(physBone.transform);
                     All_PB_Transforms.UnionWith(PB_Transforms);
+
+                    foreach (var collider in physBone.colliders)
+                    {
+                        All_PB_Transforms.Add(collider.transform);
+                        All_PB_Transforms.Add(collider.rootTransform);
+                    }
                     break;
                 }
             }
         }
-        return (PBObjects, All_PB_Transforms);
+        return All_PB_Transforms;
     }
 
 }
