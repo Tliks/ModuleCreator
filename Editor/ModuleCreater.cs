@@ -191,7 +191,7 @@ public class ModuleCreater : Editor
             }
             else
             {
-                rootBone = root_obj;
+                rootBone = physBone.gameObject;
             }
             
             Transform[] PB_Transforms = GetAllChildren(rootBone);
