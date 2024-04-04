@@ -34,7 +34,7 @@ public class ModuleCreater : Editor
 
         RemoveComponents(new_root);
 
-        CreatePrefabFromObject(new_root, "Assets/ModuleCreater/output");
+        CreatePrefabFromObject(new_root, "Assets/ModuleCreator/output");
     }
 
     private static int CheckObjects(GameObject root_obj, GameObject targetObject)
