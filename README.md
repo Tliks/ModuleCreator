@@ -1,4 +1,4 @@
-Module Creater
+Module Creator
 ====
 
 開発段階のVRC向け改変ツールです
