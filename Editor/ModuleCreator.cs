@@ -3,12 +3,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 
-[CustomEditor(typeof(ModuleCreater))]
 public class ModuleCreater : Editor
 {
     private const int PRIORITY = 50;
     
-    [MenuItem("GameObject/Module Creater/Create Module", false, PRIORITY)]
+    [MenuItem("GameObject/Module Creator/Create Module", false, PRIORITY)]
     private static void Main(MenuCommand menuCommand)
     {
         GameObject targetObject = menuCommand.context as GameObject;
@@ -204,7 +203,7 @@ public class ModuleCreater : Editor
                     All_PB_Transforms.UnionWith(PB_Transforms);
 
                     foreach (var collider in physBone.colliders)
-                    {
+                    {   
                         All_PB_Transforms.Add(collider.transform);
                         All_PB_Transforms.Add(collider.rootTransform);
                     }
