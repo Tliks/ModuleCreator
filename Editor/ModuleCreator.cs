@@ -5,7 +5,7 @@ using VRC.SDK3.Dynamics.PhysBone.Components;
 
 public class ModuleCreater : Editor
 {
-    private const int PRIORITY = 50;
+    private const int PRIORITY = 49;
     
     [MenuItem("GameObject/Module Creator/Create Module", false, PRIORITY)]
     private static void Main(MenuCommand menuCommand)
