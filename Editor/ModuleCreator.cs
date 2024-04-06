@@ -25,18 +25,18 @@ public class ModuleCreater : Editor
     private static void CheckAndCopyBones(GameObject targetObject)
     {   
         try
-    {   
-        GameObject root =  targetObject.transform.parent.gameObject;
+        {
+            GameObject root =  targetObject.transform.parent.gameObject;
 
-        int skin_index = CheckObjects(root, targetObject);
+            int skin_index = CheckObjects(root, targetObject);
 
-        GameObject new_root = CopyRootObject(root, $"{root.name}_{targetObject.name}_MA");
+            GameObject new_root = CopyRootObject(root, $"{root.name}_{targetObject.name}_MA");
 
-        CleanUpHierarchy(new_root, skin_index);
+            CleanUpHierarchy(new_root, skin_index);
 
-        RemoveComponents(new_root);
+            RemoveComponents(new_root);
 
-        CreatePrefabFromObject(new_root, "Assets/ModuleCreator/output");
+            CreatePrefabFromObject(new_root, "Assets/ModuleCreator/output");
 
         }
         catch (Exception ex)
@@ -192,27 +192,24 @@ public class ModuleCreater : Editor
         VRCPhysBone[] physBones = root_obj.GetComponentsInChildren<VRCPhysBone>();
         foreach (VRCPhysBone physBone in physBones)
         {   
-            GameObject rootBone;
-            if (physBone.rootTransform != null) 
+            if (physBone.rootTransform == null) 
             {   
-                rootBone = physBone.rootTransform.gameObject;
-            }
-            else
-            {
-                rootBone = physBone.gameObject;
+                physBone.rootTransform = physBone.transform;
             }
             
-            Transform[] PB_Transforms = GetAllChildren(rootBone);
+            Transform[] PB_Transforms = GetAllChildren(physBone.rootTransform.gameObject);
 
             foreach (Transform PB_Transform in PB_Transforms)
             {
                 if (weightedBones.Contains(PB_Transform.gameObject))
                 {   
+                    physBone.rootTransform.name = $"{physBone.rootTransform.name}.1";
                     All_PB_Transforms.Add(physBone.transform);
                     All_PB_Transforms.UnionWith(PB_Transforms);
 
                     foreach (var collider in physBone.colliders)
                     {   
+                        collider.rootTransform.name = $"{collider.rootTransform}.1";
                         All_PB_Transforms.Add(collider.transform);
                         All_PB_Transforms.Add(collider.rootTransform);
                     }
