@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using VRC.SDK3.Dynamics.PhysBone.Components;
+using System;
 
 public class ModuleCreater : Editor
 {
@@ -23,6 +24,8 @@ public class ModuleCreater : Editor
 
     private static void CheckAndCopyBones(GameObject targetObject)
     {   
+        try
+    {   
         GameObject root =  targetObject.transform.parent.gameObject;
 
         int skin_index = CheckObjects(root, targetObject);
@@ -34,6 +37,12 @@ public class ModuleCreater : Editor
         RemoveComponents(new_root);
 
         CreatePrefabFromObject(new_root, "Assets/ModuleCreator/output");
+
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
     }
 
     private static int CheckObjects(GameObject root_obj, GameObject targetObject)
@@ -46,7 +55,7 @@ public class ModuleCreater : Editor
             armature = root_obj.transform.Find("armature")?.gameObject;
             if (armature == null)
             {
-                Debug.LogError("Armature object not found under the root object.");
+                throw new InvalidOperationException("Armature object not found under the root object.");
             }
         }
 
@@ -55,7 +64,7 @@ public class ModuleCreater : Editor
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer == null)
         {
-            Debug.LogError("The target object does not have a SkinnedMeshRenderer.");
+            throw new InvalidOperationException("The target object does not have a SkinnedMeshRenderer.");
         }
 
         int skin_index = System.Array.IndexOf(AllChildren, targetObject.transform);
@@ -142,7 +151,7 @@ public class ModuleCreater : Editor
         }
         else
         {
-            Debug.LogError("Prefabの作成に失敗しました。");
+            throw new InvalidOperationException("Prefabの作成に失敗しました。");
         }
     }
 
