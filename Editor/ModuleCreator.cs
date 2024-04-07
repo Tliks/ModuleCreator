@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using System;
+using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes;
 
 public class ModuleCreater : Editor
 {
@@ -36,7 +37,7 @@ public class ModuleCreater : Editor
 
             RemoveComponents(new_root);
 
-            CreatePrefabFromObject(new_root, "Assets/ModuleCreator/output");
+            CreatePrefabFromObject(new_root, root.name);
 
         }
         catch (Exception ex)
@@ -60,7 +61,7 @@ public class ModuleCreater : Editor
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer == null)
         {
-            throw new InvalidOperationException("The target object does not have a SkinnedMeshRenderer.");
+            throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
         }
 
         Transform[] AllChildren = GetAllChildren(root_obj);
@@ -75,7 +76,7 @@ public class ModuleCreater : Editor
         // 指定のメッシュにウェイトを付けてるボーンの一覧を取得
         HashSet<GameObject> weightedBones = GetWeightedBones(skinnedMeshRenderer);
 
-        Debug.Log($"weightedBones: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
+        Debug.Log($"Bones influencing {targetObject.name}: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
         return weightedBones;
     }
 
@@ -124,29 +125,27 @@ public class ModuleCreater : Editor
         }
 
         // 削除しない条件
-        if (obj == skin)
-        {   
-            return;
-        }
-        if (All_PB_Transforms.Contains(obj.transform) || weightedBones.Contains(obj))
+        if (obj == skin || All_PB_Transforms.Contains(obj.transform) || weightedBones.Contains(obj) || obj.transform.childCount != 0)
         {
+            //RemoveComponents(obj);
             return;
         }
-        if (obj.transform.childCount != 0)
-        {
-            return;
-        }
-
         DestroyImmediate(obj);
     }
 
-    private static void CreatePrefabFromObject(GameObject obj, string BasePath)
+    private static void CreatePrefabFromObject(GameObject obj, string folder_name)
     {
-        string savePath = $"{BasePath}/{obj.name}.prefab";
+        string base_path = "Assets/ModuleCreator/output";
+        string folder_path = $"{base_path}/{folder_name}";
+        if (!AssetDatabase.IsValidFolder(folder_path))
+            AssetDatabase.CreateFolder(base_path, folder_name);
+            AssetDatabase.Refresh();
+
+        string savePath = $"{folder_path}/{folder_name}_{obj.name}.prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(obj, savePath, InteractionMode.UserAction);
         if (prefab != null)
         {
-            Debug.Log(savePath + "にPrefabが保存されました");
+            Debug.Log(savePath + "に保存されました");
         }
         else
         {
@@ -191,12 +190,10 @@ public class ModuleCreater : Editor
         return child;
     }
 
-    private static GameObject CopyComponent(GameObject parent, string name, Component component)
-    {   
-        GameObject copiedPB = CreateChild(parent, name);
+    private static void CopyComponent(GameObject target, Component component)
+    {
         UnityEditorInternal.ComponentUtility.CopyComponent(component);
-        UnityEditorInternal.ComponentUtility.PasteComponentAsNew(copiedPB);
-        return copiedPB;
+        UnityEditorInternal.ComponentUtility.PasteComponentAsNew(target);
     }
 
     private static (HashSet<VRCPhysBone>, HashSet<VRCPhysBoneCollider>) Find_weighted_PB(GameObject root, HashSet<GameObject> weightedBones)
@@ -234,14 +231,35 @@ public class ModuleCreater : Editor
                 }
             }
         }
+
+        VRCPhysBoneCollider[] colliders = root.GetComponentsInChildren<VRCPhysBoneCollider>(true);
+        foreach (VRCPhysBoneCollider collider in colliders)
+        {
+            if (!All_PBC.Contains(collider))
+            {
+                DestroyImmediate(collider);
+            }
+        }
+
         return (All_PB, All_PBC);
     }
+
     private static VRCPhysBoneCollider ReplacePBC(GameObject root_PBC, VRCPhysBoneCollider PBC, HashSet<VRCPhysBone> All_PB)
     {
-        GameObject copied_PBC = CopyComponent(root_PBC, PBC.rootTransform.name, PBC);
-        VRCPhysBoneCollider new_PBC = copied_PBC.GetComponent<VRCPhysBoneCollider>();
+        GameObject copied_obj = CreateChild(root_PBC, PBC.rootTransform.name);
+        CopyComponent(copied_obj, PBC);
+        VRCPhysBoneCollider new_PBC = copied_obj.GetComponent<VRCPhysBoneCollider>();
         //ルートの名称を変更
         new_PBC.rootTransform.name = $"{new_PBC.rootTransform.name}.1";
+
+        //コライダーのrootがNoneだった場合
+        if (PBC.rootTransform == PBC.transform)
+        {
+            //new_PBC.rootTransform = new_PBC.transform;
+            //UnityEditorInternal.ComponentUtility.CopyComponent(PBC.transform);
+            //UnityEditorInternal.ComponentUtility.PasteComponentValues(new_PBC.transform);
+        }
+
         //PBのコライダーを変更
         foreach (VRCPhysBone PB in All_PB)
         {
@@ -256,10 +274,17 @@ public class ModuleCreater : Editor
     }
     private static VRCPhysBone ReplacePB(GameObject root_PB, VRCPhysBone PB)
     {
-        GameObject copied_PB = CopyComponent(root_PB, PB.rootTransform.name, PB);
-        VRCPhysBone new_PB = copied_PB.GetComponent<VRCPhysBone>();
+        GameObject copied_obj = CreateChild(root_PB, PB.rootTransform.name);
+        CopyComponent(copied_obj, PB);
+        VRCPhysBone new_PB = copied_obj.GetComponent<VRCPhysBone>();
         //ルートの名称を変更
         new_PB.rootTransform.name = $"{new_PB.rootTransform.name}.1";
+
+        if (PB.rootTransform == PB.transform)
+        {
+            //new_PB.rootTransform = new_PB.transform;
+        }
+
         return new_PB;
     }
 
