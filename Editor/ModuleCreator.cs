@@ -47,8 +47,6 @@ public class ModuleCreater : Editor
 
     private static int CheckObjects(GameObject root_obj, GameObject targetObject)
     {
-        Transform[] AllChildren = GetAllChildren(root_obj);
-
         GameObject armature = root_obj.transform.Find("Armature")?.gameObject;
         if (armature == null)
         {
@@ -59,15 +57,14 @@ public class ModuleCreater : Editor
             }
         }
 
-        //List<int> armature_indexs = GetObjectAndChildrenIndexes(armature, AllChildren);
-
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer == null)
         {
             throw new InvalidOperationException("The target object does not have a SkinnedMeshRenderer.");
         }
 
-        int skin_index = System.Array.IndexOf(AllChildren, targetObject.transform);
+        Transform[] AllChildren = GetAllChildren(root_obj);
+        int skin_index = Array.IndexOf(AllChildren, targetObject.transform);
 
         return skin_index;
     }
@@ -86,7 +83,7 @@ public class ModuleCreater : Editor
     {   
         BoneWeight[] boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
         HashSet<GameObject> weightedBones = new HashSet<GameObject>();
-        foreach (var boneWeight in boneWeights)
+        foreach (BoneWeight boneWeight in boneWeights)
         {
             if (boneWeight.weight0 > 0) weightedBones.Add(skinnedMeshRenderer.bones[boneWeight.boneIndex0].gameObject);
             if (boneWeight.weight1 > 0) weightedBones.Add(skinnedMeshRenderer.bones[boneWeight.boneIndex1].gameObject);
@@ -107,8 +104,10 @@ public class ModuleCreater : Editor
     {   
 
         Transform[] AllChildren = GetAllChildren(new_root);
-
         GameObject skin = AllChildren[skin_index].gameObject;
+        skin.SetActive(true);
+        skin.tag = "Untagged"; 
+
         HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
         HashSet<Transform> All_PB_Transforms = Find_PB_Transforms(new_root, weightedBones);
         CheckAndDeleteRecursive(new_root, weightedBones, skin, All_PB_Transforms);
@@ -167,7 +166,7 @@ public class ModuleCreater : Editor
 
     private static Transform[] GetAllChildren(GameObject parent)
     {
-        Transform[] children = parent.GetComponentsInChildren<Transform>();
+        Transform[] children = parent.GetComponentsInChildren<Transform>(true);
         return children;
     }
 
@@ -175,7 +174,7 @@ public class ModuleCreater : Editor
     {
         Component[] components = targetGameObject.GetComponents<Component>();
 
-        foreach (var component in components)
+        foreach (Component component in components)
         {
             // コンポーネントがTransform以外の場合、削除
             if (!(component is Transform))
@@ -185,11 +184,28 @@ public class ModuleCreater : Editor
         }
     }
 
-    private static HashSet<Transform> Find_PB_Transforms(GameObject root_obj, HashSet<GameObject> weightedBones)
+    private static GameObject CreateChild(GameObject parent, string name)
+    {
+        GameObject child = new GameObject(name);
+        child.transform.SetParent(parent.transform, false);
+        return child;
+    }
+
+    private static GameObject CopyComponent(GameObject parent, string name, Component component)
     {   
-        HashSet<Transform> All_PB_Transforms = new HashSet<Transform>();
+        GameObject copiedPB = CreateChild(parent, name);
+        UnityEditorInternal.ComponentUtility.CopyComponent(component);
+        UnityEditorInternal.ComponentUtility.PasteComponentAsNew(copiedPB);
+        return copiedPB;
+    }
+
+    private static (HashSet<VRCPhysBone>, HashSet<VRCPhysBoneCollider>) Find_weighted_PB(GameObject root, HashSet<GameObject> weightedBones)
+    {   
+        HashSet<VRCPhysBone> All_PB = new HashSet<VRCPhysBone>();
+        HashSet<VRCPhysBoneCollider> All_PBC = new HashSet<VRCPhysBoneCollider>();
+        //Dictionary<VRCPhysBoneCollider, (VRCPhysBone, int)> All_PBC = new Dictionary<VRCPhysBoneCollider, (VRCPhysBone, int)>();
         
-        VRCPhysBone[] physBones = root_obj.GetComponentsInChildren<VRCPhysBone>();
+        VRCPhysBone[] physBones = root.GetComponentsInChildren<VRCPhysBone>(true);
         foreach (VRCPhysBone physBone in physBones)
         {   
             if (physBone.rootTransform == null) 
@@ -203,20 +219,80 @@ public class ModuleCreater : Editor
             {
                 if (weightedBones.Contains(PB_Transform.gameObject))
                 {   
-                    physBone.rootTransform.name = $"{physBone.rootTransform.name}.1";
-                    All_PB_Transforms.Add(physBone.transform);
-                    All_PB_Transforms.UnionWith(PB_Transforms);
-
-                    foreach (var collider in physBone.colliders)
+                    All_PB.Add(physBone);
+                    
+                    foreach (VRCPhysBoneCollider collider in physBone.colliders)
                     {   
-                        collider.rootTransform.name = $"{collider.rootTransform}.1";
-                        All_PB_Transforms.Add(collider.transform);
-                        All_PB_Transforms.Add(collider.rootTransform);
+                        if (collider.rootTransform == null) 
+                        {   
+                            collider.rootTransform = collider.transform;
+                        }
+
+                        All_PBC.Add(collider);
                     }
                     break;
                 }
             }
         }
+        return (All_PB, All_PBC);
+    }
+    private static VRCPhysBoneCollider ReplacePBC(GameObject root_PBC, VRCPhysBoneCollider PBC, HashSet<VRCPhysBone> All_PB)
+    {
+        GameObject copied_PBC = CopyComponent(root_PBC, PBC.rootTransform.name, PBC);
+        VRCPhysBoneCollider new_PBC = copied_PBC.GetComponent<VRCPhysBoneCollider>();
+        //ルートの名称を変更
+        new_PBC.rootTransform.name = $"{new_PBC.rootTransform.name}.1";
+        //PBのコライダーを変更
+        foreach (VRCPhysBone PB in All_PB)
+        {
+            int index = PB.colliders.IndexOf(PBC);
+            if (index >= 0)
+            {
+                PB.colliders[index] = new_PBC;
+            }
+            
+        }
+        return new_PBC;
+    }
+    private static VRCPhysBone ReplacePB(GameObject root_PB, VRCPhysBone PB)
+    {
+        GameObject copied_PB = CopyComponent(root_PB, PB.rootTransform.name, PB);
+        VRCPhysBone new_PB = copied_PB.GetComponent<VRCPhysBone>();
+        //ルートの名称を変更
+        new_PB.rootTransform.name = $"{new_PB.rootTransform.name}.1";
+        return new_PB;
+    }
+
+    private static HashSet<Transform> Find_PB_Transforms(GameObject root, HashSet<GameObject> weightedBones)
+    {   
+        HashSet<Transform> All_PB_Transforms = new HashSet<Transform>();
+
+        (HashSet<VRCPhysBone> All_PB, HashSet<VRCPhysBoneCollider> All_PBC) = Find_weighted_PB(root, weightedBones);
+        
+        GameObject AvatarDynamics = CreateChild(root, "AvatarDynamics");
+        GameObject root_PB = CreateChild(AvatarDynamics, "PhysBones");
+        GameObject root_PBC = CreateChild(AvatarDynamics, "PhysBoneColliders");
+
+        foreach (VRCPhysBoneCollider PBC in All_PBC)
+        {
+            VRCPhysBoneCollider new_PBC = ReplacePBC(root_PBC, PBC, All_PB);
+            DestroyImmediate(PBC);
+				
+            All_PB_Transforms.Add(new_PBC.transform);
+            All_PB_Transforms.Add(new_PBC.rootTransform);
+        }
+
+        foreach (VRCPhysBone PB in All_PB)
+        {
+            VRCPhysBone new_PB = ReplacePB(root_PB, PB);
+            DestroyImmediate(PB);
+
+            Transform[] PB_Transforms = GetAllChildren(new_PB.rootTransform.gameObject);
+
+            All_PB_Transforms.Add(new_PB.transform);
+            All_PB_Transforms.UnionWith(PB_Transforms);
+        }
+       
         return All_PB_Transforms;
     }
 
