@@ -3,7 +3,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using System;
-using BestHTTP.SecureProtocol.Org.BouncyCastle.Crypto.Modes;
 
 public class ModuleCreater : Editor
 {
@@ -27,9 +26,7 @@ public class ModuleCreater : Editor
     {   
         try
         {
-            GameObject root =  targetObject.transform.parent.gameObject;
-
-            int skin_index = CheckObjects(root, targetObject);
+            (GameObject root, int skin_index) = CheckObjects(targetObject);
 
             GameObject new_root = CopyRootObject(root, $"{root.name}_{targetObject.name}_MA");
 
@@ -46,12 +43,19 @@ public class ModuleCreater : Editor
         }
     }
 
-    private static int CheckObjects(GameObject root_obj, GameObject targetObject)
+    private static (GameObject, int) CheckObjects(GameObject targetObject)
     {
-        GameObject armature = root_obj.transform.Find("Armature")?.gameObject;
+        Transform parent = targetObject.transform.parent;
+        if (parent == null)
+        {
+            throw new InvalidOperationException("アバター(衣装)直下のSkinnedMeshRendererがついたオブジェクトを選択してください");
+        }
+        GameObject root = parent.gameObject;
+
+        GameObject armature = root.transform.Find("Armature")?.gameObject;
         if (armature == null)
         {
-            armature = root_obj.transform.Find("armature")?.gameObject;
+            armature = root.transform.Find("armature")?.gameObject;
             if (armature == null)
             {
                 throw new InvalidOperationException("Armature object not found under the root object.");
@@ -64,10 +68,10 @@ public class ModuleCreater : Editor
             throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
         }
 
-        Transform[] AllChildren = GetAllChildren(root_obj);
+        Transform[] AllChildren = GetAllChildren(root);
         int skin_index = Array.IndexOf(AllChildren, targetObject.transform);
 
-        return skin_index;
+        return (root, skin_index);
     }
 
     private static HashSet<GameObject> CheckBoneWeight(GameObject targetObject)
@@ -135,11 +139,19 @@ public class ModuleCreater : Editor
 
     private static void CreatePrefabFromObject(GameObject obj, string folder_name)
     {
-        string base_path = "Assets/ModuleCreator/output";
+        string base_path = "Assets/ModuleCreator";
+        if (!AssetDatabase.IsValidFolder(base_path))
+        {
+            AssetDatabase.CreateFolder("Assets", "ModuleCreator");
+            AssetDatabase.Refresh();
+        }
+        
         string folder_path = $"{base_path}/{folder_name}";
         if (!AssetDatabase.IsValidFolder(folder_path))
+        {
             AssetDatabase.CreateFolder(base_path, folder_name);
             AssetDatabase.Refresh();
+        }
 
         string savePath = $"{folder_path}/{folder_name}_{obj.name}.prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(obj, savePath, InteractionMode.UserAction);
