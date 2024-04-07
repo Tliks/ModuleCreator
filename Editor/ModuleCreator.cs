@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using System;
 
-public class ModuleCreater : Editor
+public class ModuleCreator : Editor
 {
     private const int PRIORITY = 49;
     
