@@ -1,0 +1,15 @@
+{
+  "name": "com.aoyon.module-creator",
+  "displayName": "Module Creator",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "Output mesh unit for convenient modification and management",
+  "author": {
+    "name": "Ao_425",
+    "url": "https://github.com/Tliks"
+  },
+  "url": "https://github.com/Tliks/ModuleCreator",
+  "vpmDependencies": {
+    "com.vrchat.avatars": ">=3.0.0"
+  }
+}
