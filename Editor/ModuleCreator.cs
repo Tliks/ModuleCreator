@@ -45,6 +45,7 @@ public class ModuleCreator : Editor
 
     private static (GameObject, int) CheckObjects(GameObject targetObject)
     {
+        //親オブジェクトが存在するか確認
         Transform parent = targetObject.transform.parent;
         if (parent == null)
         {
@@ -52,16 +53,22 @@ public class ModuleCreator : Editor
         }
         GameObject root = parent.gameObject;
 
-        GameObject armature = root.transform.Find("Armature")?.gameObject;
-        if (armature == null)
+        //armatureがあるか確認
+        GameObject armature = null;
+        foreach (Transform child in root.transform)
         {
-            armature = root.transform.Find("armature")?.gameObject;
-            if (armature == null)
+            if (child.name.ToLower().StartsWith("armature"))
             {
-                throw new InvalidOperationException("Armature object not found under the root object.");
+                armature = child.gameObject;
+                break;
             }
         }
+        if (armature == null)
+        {
+            throw new InvalidOperationException("Armature object not found under the root object.");
+        }
 
+        //SkinnedMeshRendererがついたオブジェクトか確認
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer == null)
         {
