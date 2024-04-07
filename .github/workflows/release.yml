@@ -30,7 +30,7 @@ jobs:
     permissions:
       contents: write
     env:
-      packagePath: Editor
+      packagePath: . 
     if: needs.config.outputs.config_package == 'true'
     steps:
 
