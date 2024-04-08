@@ -268,8 +268,6 @@ public class ModuleCreator : Editor
         GameObject copied_obj = CreateChild(root_PBC, PBC.rootTransform.name);
         CopyComponent(copied_obj, PBC);
         VRCPhysBoneCollider new_PBC = copied_obj.GetComponent<VRCPhysBoneCollider>();
-        //ルートの名称を変更
-        new_PBC.rootTransform.name = $"{new_PBC.rootTransform.name}.1";
 
         //コライダーのrootがNoneだった場合
         if (PBC.rootTransform == PBC.transform)
@@ -289,6 +287,8 @@ public class ModuleCreator : Editor
             }
             
         }
+
+        DestroyImmediate(PBC);
         return new_PBC;
     }
     private static VRCPhysBone ReplacePB(GameObject root_PB, VRCPhysBone PB)
@@ -296,44 +296,63 @@ public class ModuleCreator : Editor
         GameObject copied_obj = CreateChild(root_PB, PB.rootTransform.name);
         CopyComponent(copied_obj, PB);
         VRCPhysBone new_PB = copied_obj.GetComponent<VRCPhysBone>();
-        //ルートの名称を変更
-        new_PB.rootTransform.name = $"{new_PB.rootTransform.name}.1";
 
         if (PB.rootTransform == PB.transform)
         {
             //new_PB.rootTransform = new_PB.transform;
         }
 
+        DestroyImmediate(PB);
         return new_PB;
     }
 
+    private static (GameObject, GameObject) CreatePBRoot(GameObject root)
+    {
+        GameObject AvatarDynamics = null;
+        foreach (Transform child in root.transform)
+        {
+            if (child.name.ToLower().StartsWith("avatardynamics"))
+            {
+                AvatarDynamics = child.gameObject;
+                break;
+            }
+        }
+        if (AvatarDynamics == null)
+        {
+            AvatarDynamics = CreateChild(root, "AvatarDynamics");
+        }
+        
+        GameObject root_PB = CreateChild(AvatarDynamics, "PhysBones");
+        GameObject root_PBC = CreateChild(AvatarDynamics, "PhysBoneColliders");
+
+        return (root_PB, root_PBC);
+    }
+    
     private static HashSet<Transform> Find_PB_Transforms(GameObject root, HashSet<GameObject> weightedBones)
     {   
         HashSet<Transform> All_PB_Transforms = new HashSet<Transform>();
 
         (HashSet<VRCPhysBone> All_PB, HashSet<VRCPhysBoneCollider> All_PBC) = Find_weighted_PB(root, weightedBones);
         
-        GameObject AvatarDynamics = CreateChild(root, "AvatarDynamics");
-        GameObject root_PB = CreateChild(AvatarDynamics, "PhysBones");
-        GameObject root_PBC = CreateChild(AvatarDynamics, "PhysBoneColliders");
+        //(GameObject root_PB, GameObject root_PBC) = CreatePBRoot(root)
 
         foreach (VRCPhysBoneCollider PBC in All_PBC)
         {
-            VRCPhysBoneCollider new_PBC = ReplacePBC(root_PBC, PBC, All_PB);
-            DestroyImmediate(PBC);
+            //PBC = ReplacePBC(root_PBC, PBC, All_PB);
+            //PBC.rootTransform.name = $"{PBC.rootTransform.name}.1";
 				
-            All_PB_Transforms.Add(new_PBC.transform);
-            All_PB_Transforms.Add(new_PBC.rootTransform);
+            All_PB_Transforms.Add(PBC.transform);
+            All_PB_Transforms.Add(PBC.rootTransform);
         }
 
         foreach (VRCPhysBone PB in All_PB)
         {
-            VRCPhysBone new_PB = ReplacePB(root_PB, PB);
-            DestroyImmediate(PB);
+            //PB = ReplacePB(root_PB, PB);
+            //PB.rootTransform.name = $"{PB.rootTransform.name}.1";
 
-            Transform[] PB_Transforms = GetAllChildren(new_PB.rootTransform.gameObject);
+            Transform[] PB_Transforms = GetAllChildren(PB.rootTransform.gameObject);
 
-            All_PB_Transforms.Add(new_PB.transform);
+            All_PB_Transforms.Add(PB.transform);
             All_PB_Transforms.UnionWith(PB_Transforms);
         }
        
