@@ -202,6 +202,16 @@ public class ModuleCreator : Editor
         }
     }
 
+    public static void AddSingleChildRecursive(Transform transform, HashSet<Transform> result)
+    {
+        result.Add(transform);
+        if (transform.childCount == 1)
+        {
+            Transform child = transform.GetChild(0);
+            AddSingleChildRecursive(child, result);
+        }
+    }
+
     private static HashSet<Transform> Find_PB_Transforms(GameObject root, HashSet<GameObject> weightedBones)
     {   
         HashSet<Transform> All_PB_Transforms = new HashSet<Transform>();
@@ -216,26 +226,35 @@ public class ModuleCreator : Editor
             
             Transform[] PB_Transforms = GetAllChildren(physBone.rootTransform.gameObject);
 
+            HashSet<Transform> weighted_PB_Transforms = new HashSet<Transform>();
+
             foreach (Transform PB_Transform in PB_Transforms)
             {
                 if (weightedBones.Contains(PB_Transform.gameObject))
                 {   
-                    All_PB_Transforms.Add(physBone.transform);
-                    All_PB_Transforms.UnionWith(PB_Transforms);
-                    
-                    foreach (VRCPhysBoneCollider collider in physBone.colliders)
-                    {   
-                        if (collider.rootTransform == null) 
-                        {   
-                            collider.rootTransform = collider.transform;
-                        }
-
-                        All_PB_Transforms.Add(collider.transform);
-                        All_PB_Transforms.Add(collider.rootTransform);
-                    }
-                    break;
+                    HashSet<Transform> result = new HashSet<Transform>();
+                    AddSingleChildRecursive(PB_Transform, result);
+                    weighted_PB_Transforms.UnionWith(result);
                 }
             }
+
+            //有効なPBだった場合
+            if (weighted_PB_Transforms.Count > 0)
+            {
+                All_PB_Transforms.Add(physBone.transform);
+                All_PB_Transforms.UnionWith(weighted_PB_Transforms);
+
+                foreach (VRCPhysBoneCollider collider in physBone.colliders)
+                {   
+                    if (collider.rootTransform == null) 
+                    {   
+                        collider.rootTransform = collider.transform;
+                    }
+
+                    All_PB_Transforms.Add(collider.transform);
+                    All_PB_Transforms.Add(collider.rootTransform);
+                }
+            }            
         }
 
         VRCPhysBoneCollider[] colliders = root.GetComponentsInChildren<VRCPhysBoneCollider>(true);
