@@ -7,7 +7,7 @@
     "VRC.SDKBase.Editor",
     "com.aoyon.module-creator"
   ],
-  "includePlatforms": [],
+  "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "autoReferenced": true,
