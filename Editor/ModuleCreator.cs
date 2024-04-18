@@ -77,6 +77,7 @@ public class ModuleCreator : Editor
             throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
         }
 
+        //skin_index: 複製先でSkinnedMeshRendererがついたオブジェクトを追跡するためのインデックス
         Transform[] AllChildren = GetAllChildren(root);
         int skin_index = Array.IndexOf(AllChildren, targetObject.transform);
 
@@ -138,7 +139,7 @@ public class ModuleCreator : Editor
 
     private static void CleanUpHierarchy(GameObject new_root, int skin_index)
     {   
-
+        //複製先のSkinnedMeshRendererがついたオブジェクトを取得
         Transform[] AllChildren = GetAllChildren(new_root);
         GameObject skin = AllChildren[skin_index].gameObject;
         skin.SetActive(true);
@@ -198,6 +199,9 @@ public class ModuleCreator : Editor
         }
     }
 
+    //配下のオブジェクトにおいて、枝分かれしない限り再帰的に追加する
+    //単一のPBコンポーネントの影響下に複数のメッシュが紐づけられている際に不要なPB Transformsが適切に削除されるようになる
+    //commit: ddc51eaf8b9cacdac632962daa2bfe3e2ba51c4c
     public static void AddSingleChildRecursive(Transform transform, HashSet<Transform> result)
     {
         result.Add(transform);
@@ -208,6 +212,7 @@ public class ModuleCreator : Editor
         }
     }
 
+    //VRCPhysBoneとVRCPhysBoneColliderを検索し、削除対象から除外するためのHashSetを返す
     private static HashSet<Transform> Find_PB_Transforms(GameObject root, HashSet<GameObject> weightedBones)
     {   
         HashSet<Transform> All_PB_Transforms = new HashSet<Transform>();
@@ -224,6 +229,7 @@ public class ModuleCreator : Editor
 
             HashSet<Transform> weighted_PB_Transforms = new HashSet<Transform>();
 
+            //保持されるべき一部の親オブジェクトは現状追加されていないが、削除時にchildCount == 0の条件が含まれるので必要な親オブジェクトは実際には保持される
             foreach (Transform PB_Transform in PB_Transforms)
             {
                 if (weightedBones.Contains(PB_Transform.gameObject))
@@ -237,6 +243,9 @@ public class ModuleCreator : Editor
             //有効なPBだった場合
             if (weighted_PB_Transforms.Count > 0)
             {
+                //MAの仕様に反し衣装側のPBを強制
+                //physBone.rootTransform.name = $"{physBone.rootTransform.name}.1";
+
                 All_PB_Transforms.Add(physBone.transform);
                 All_PB_Transforms.UnionWith(weighted_PB_Transforms);
 
@@ -253,8 +262,16 @@ public class ModuleCreator : Editor
             }            
         }
 
+        //不要なコライダーを削除
         VRCPhysBoneCollider[] colliders = root.GetComponentsInChildren<VRCPhysBoneCollider>(true);
         foreach (VRCPhysBoneCollider collider in colliders)
+        {
+            if (All_PB_Transforms.Contains(collider.transform))
+            {
+                //MAの仕様に反し衣装側のPBCを強制
+               //collider.rootTransform.name = $"{collider.rootTransform.name}.1";
+            }
+            else
         {
                 DestroyImmediate(collider, true);
             }
