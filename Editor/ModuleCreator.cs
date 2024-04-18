@@ -28,13 +28,15 @@ public class ModuleCreator : Editor
         {
             (GameObject root, int skin_index) = CheckObjects(targetObject);
 
-            GameObject new_root = CopyRootObject(root, $"{root.name}_{targetObject.name}_MA");
+            (GameObject new_root, string variantPath) = CopyRootObject(root, targetObject.name);
 
             CleanUpHierarchy(new_root, skin_index);
 
             RemoveComponents(new_root);
 
-            CreatePrefabFromObject(new_root, root.name);
+            PrefabUtility.InstantiatePrefab(new_root);
+            
+            Debug.Log(variantPath + "に保存されました");
 
         }
         catch (Exception ex)
@@ -105,11 +107,33 @@ public class ModuleCreator : Editor
         return weightedBones;
     }
 
-    private static GameObject CopyRootObject(GameObject root_object, string new_name)
+    private static (GameObject, string) CopyRootObject(GameObject root_object, string target_name)
     {
-        GameObject new_root = Instantiate(root_object);
-        new_root.name = new_name;
-        return new_root;
+        string base_path = $"Assets/ModuleCreator";
+        if (!AssetDatabase.IsValidFolder(base_path))
+        {
+            AssetDatabase.CreateFolder("Assets", "ModuleCreator");
+            AssetDatabase.Refresh();
+        }
+        
+        string folderPath = $"{base_path}/{root_object.name}";
+        if (!AssetDatabase.IsValidFolder(folderPath))
+        {
+            AssetDatabase.CreateFolder(base_path, root_object.name);
+            AssetDatabase.Refresh();
+        }
+
+        string fileName = $"{target_name}_MA";
+        string fileExtension = "prefab";
+        
+        string variantPath = AssetDatabase.GenerateUniqueAssetPath(folderPath + "/" + fileName + "." + fileExtension);
+        
+        GameObject new_root = PrefabUtility.SaveAsPrefabAsset(root_object, variantPath);        
+        if (new_root == null)
+        {
+            throw new InvalidOperationException("Prefabの作成に失敗しました。");
+        }
+        return (new_root, variantPath);
     }
 
     private static void CleanUpHierarchy(GameObject new_root, int skin_index)
@@ -141,35 +165,7 @@ public class ModuleCreator : Editor
             //RemoveComponents(obj);
             return;
         }
-        DestroyImmediate(obj);
-    }
-
-    private static void CreatePrefabFromObject(GameObject obj, string folder_name)
-    {
-        string base_path = "Assets/ModuleCreator";
-        if (!AssetDatabase.IsValidFolder(base_path))
-        {
-            AssetDatabase.CreateFolder("Assets", "ModuleCreator");
-            AssetDatabase.Refresh();
-        }
-        
-        string folder_path = $"{base_path}/{folder_name}";
-        if (!AssetDatabase.IsValidFolder(folder_path))
-        {
-            AssetDatabase.CreateFolder(base_path, folder_name);
-            AssetDatabase.Refresh();
-        }
-
-        string savePath = $"{folder_path}/{folder_name}_{obj.name}.prefab";
-        GameObject prefab = PrefabUtility.SaveAsPrefabAssetAndConnect(obj, savePath, InteractionMode.UserAction);
-        if (prefab != null)
-        {
-            Debug.Log(savePath + "に保存されました");
-        }
-        else
-        {
-            throw new InvalidOperationException("Prefabの作成に失敗しました。");
-        }
+        DestroyImmediate(obj, true);
     }
 
     private static List<GameObject> GetChildren(GameObject parent)
@@ -197,7 +193,7 @@ public class ModuleCreator : Editor
             // コンポーネントがTransform以外の場合、削除
             if (!(component is Transform))
             {
-                DestroyImmediate(component);
+                DestroyImmediate(component, true);
             }
         }
     }
@@ -260,9 +256,7 @@ public class ModuleCreator : Editor
         VRCPhysBoneCollider[] colliders = root.GetComponentsInChildren<VRCPhysBoneCollider>(true);
         foreach (VRCPhysBoneCollider collider in colliders)
         {
-            if (!All_PB_Transforms.Contains(collider.transform))
-            {
-                DestroyImmediate(collider);
+                DestroyImmediate(collider, true);
             }
         }
 
