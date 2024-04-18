@@ -272,7 +272,7 @@ public class ModuleCreator : Editor
                //collider.rootTransform.name = $"{collider.rootTransform.name}.1";
             }
             else
-        {
+            {
                 DestroyImmediate(collider, true);
             }
         }
