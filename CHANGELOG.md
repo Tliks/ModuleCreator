@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.1] - 2024-04-23
+### Changed
+- Save as prefab variant if possible 
+- Exclude avatar name from prefabs.
+- Specify unique names for prefabs.
+
 ## [0.3.0] - 2024-04-12
 ### Added
 - Add CHANGELOG
