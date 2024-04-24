@@ -262,6 +262,10 @@ public class ModuleCreator : Editor
                     physBoneTransforms.Add(collider.rootTransform);
                 }
             }
+            else
+            {
+                DestroyImmediate(physBone, true);
+            }
         }
 
         RemoveUnusedPhysBoneColliders(root, physBoneTransforms);
