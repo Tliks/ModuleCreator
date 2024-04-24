@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2] - 2024-04-25
+### Added
+- Added option to disable PB output
+- Remove unnecessary components
+
+### Fixed
+- Unnecessary PhysBone is not removed
+
 ## [0.3.1] - 2024-04-23
 ### Changed
 - Save as prefab variant if possible 
