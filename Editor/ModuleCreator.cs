@@ -7,46 +7,46 @@ using VRC.SDK3.Dynamics.PhysBone.Components;
 
 public class ModuleCreator : Editor
 {
-    private const int PRIORITY = 49;
-    private static bool inculdePB = false;
+    private const int MENU_PRIORITY = 49;
+    private static bool includePhysBone = false;
     
-    [MenuItem("GameObject/Module Creator/Create Module", false, PRIORITY)]
-    private static void Main(MenuCommand menuCommand)
+    [MenuItem("GameObject/Module Creator/Create Module", false, MENU_PRIORITY)]
+    private static void CreateModule(MenuCommand menuCommand)
     {
-        GameObject targetObject = menuCommand.context as GameObject;
+        GameObject sourceObject = menuCommand.context as GameObject;
 
-        if (targetObject == null)
+        if (sourceObject == null)
         {
             Debug.LogError("Target object is not set.");
             return;
         }
 
-        inculdePB = true;
-        CheckAndCopyBones(targetObject);
+        includePhysBone = true;
+        CheckAndCopyBones(sourceObject);
     }
 
-    [MenuItem("GameObject/Module Creator/Create Module without PhysBone", false, PRIORITY)]
-    private static void Main_without_PB(MenuCommand menuCommand)
+    [MenuItem("GameObject/Module Creator/Create Module without PhysBone", false, MENU_PRIORITY)]
+    private static void CreateModuleWithoutPhysBone(MenuCommand menuCommand)
     {
-        GameObject targetObject = menuCommand.context as GameObject;
+        GameObject sourceObject = menuCommand.context as GameObject;
 
-        if (targetObject == null)
+        if (sourceObject == null)
         {
             Debug.LogError("Target object is not set.");
             return;
         }
 
-        inculdePB = false;
-        CheckAndCopyBones(targetObject);
+        includePhysBone = false;
+        CheckAndCopyBones(sourceObject);
     }
 
-    private static void CheckAndCopyBones(GameObject targetObject)
+    private static void CheckAndCopyBones(GameObject sourceObject)
     {   
         try
         {
-            (GameObject root, int skin_index) = CheckObjects(targetObject);
+            (GameObject root, int skin_index) = CheckObjects(sourceObject);
 
-            (GameObject new_root, string variantPath) = CopyRootObject(root, targetObject.name);
+            (GameObject new_root, string variantPath) = CopyRootObject(root, sourceObject.name);
 
             CleanUpHierarchy(new_root, skin_index);
 
@@ -124,7 +124,7 @@ public class ModuleCreator : Editor
         return weightedBones;
     }
 
-    private static (GameObject, string) CopyRootObject(GameObject root_object, string target_name)
+    private static (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
     {
         string base_path = $"Assets/ModuleCreator";
         if (!AssetDatabase.IsValidFolder(base_path))
@@ -140,7 +140,7 @@ public class ModuleCreator : Editor
             AssetDatabase.Refresh();
         }
 
-        string fileName = $"{target_name}_MA";
+        string fileName = $"{source_name}_MA";
         string fileExtension = "prefab";
         
         string variantPath = AssetDatabase.GenerateUniqueAssetPath(folderPath + "/" + fileName + "." + fileExtension);
@@ -163,7 +163,7 @@ public class ModuleCreator : Editor
 
         HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
         HashSet<Transform> All_PB_Transforms;
-        if (inculdePB == true) 
+        if (includePhysBone == true) 
         {
             All_PB_Transforms = Find_PB_Transforms(new_root, weightedBones);
         }
@@ -213,7 +213,7 @@ public class ModuleCreator : Editor
     {
         // Componentを列挙し、Transform、VRCPhysBone、VRCPhysBoneCollider, SkinnedMeshRenderer以外を削除
         List<Component> componentsToRemove;
-        if (inculdePB == true)
+        if (includePhysBone == true)
         {
             componentsToRemove = targetGameObject.GetComponents<Component>()
                 .Where(c => !(c is Transform) && !(c is SkinnedMeshRenderer)&& !(c is VRCPhysBone) && !(c is VRCPhysBoneCollider))
