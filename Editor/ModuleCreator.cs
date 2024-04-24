@@ -232,7 +232,7 @@ public class ModuleCreator : Editor
         }
     }
 
-    public static void AddSingleChildRecursive(Transform transform, HashSet<Transform> result)
+    private static void AddSingleChildRecursive(Transform transform, HashSet<Transform> result)
     {
         result.Add(transform);
         if (transform.childCount == 1)
