@@ -1,12 +1,14 @@
 using UnityEditor;
 using UnityEngine;
+using System;
+using System.Linq;
 using System.Collections.Generic;
 using VRC.SDK3.Dynamics.PhysBone.Components;
-using System;
 
 public class ModuleCreator : Editor
 {
     private const int PRIORITY = 49;
+    private static bool inculdePB = false;
     
     [MenuItem("GameObject/Module Creator/Create Module", false, PRIORITY)]
     private static void Main(MenuCommand menuCommand)
@@ -19,6 +21,22 @@ public class ModuleCreator : Editor
             return;
         }
 
+        inculdePB = true;
+        CheckAndCopyBones(targetObject);
+    }
+
+    [MenuItem("GameObject/Module Creator/Create Module without PhysBone", false, PRIORITY)]
+    private static void Main_without_PB(MenuCommand menuCommand)
+    {
+        GameObject targetObject = menuCommand.context as GameObject;
+
+        if (targetObject == null)
+        {
+            Debug.LogError("Target object is not set.");
+            return;
+        }
+
+        inculdePB = false;
         CheckAndCopyBones(targetObject);
     }
 
@@ -31,8 +49,6 @@ public class ModuleCreator : Editor
             (GameObject new_root, string variantPath) = CopyRootObject(root, targetObject.name);
 
             CleanUpHierarchy(new_root, skin_index);
-
-            RemoveComponents(new_root);
 
             PrefabUtility.InstantiatePrefab(new_root);
             
@@ -146,7 +162,15 @@ public class ModuleCreator : Editor
         skin.tag = "Untagged"; 
 
         HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
-        HashSet<Transform> All_PB_Transforms = Find_PB_Transforms(new_root, weightedBones);
+        HashSet<Transform> All_PB_Transforms;
+        if (inculdePB == true) 
+        {
+            All_PB_Transforms = Find_PB_Transforms(new_root, weightedBones);
+        }
+        else
+        {
+            All_PB_Transforms = new HashSet<Transform>();
+        }
         CheckAndDeleteRecursive(new_root, weightedBones, skin, All_PB_Transforms);
     }
 
@@ -163,7 +187,7 @@ public class ModuleCreator : Editor
         // 削除しない条件
         if (obj == skin || All_PB_Transforms.Contains(obj.transform) || weightedBones.Contains(obj) || obj.transform.childCount != 0)
         {
-            //RemoveComponents(obj);
+            RemoveComponents(obj);
             return;
         }
         DestroyImmediate(obj, true);
@@ -187,15 +211,24 @@ public class ModuleCreator : Editor
 
     private static void RemoveComponents(GameObject targetGameObject)
     {
-        Component[] components = targetGameObject.GetComponents<Component>();
-
-        foreach (Component component in components)
+        // Componentを列挙し、Transform、VRCPhysBone、VRCPhysBoneCollider, SkinnedMeshRenderer以外を削除
+        List<Component> componentsToRemove;
+        if (inculdePB == true)
         {
-            // コンポーネントがTransform以外の場合、削除
-            if (!(component is Transform))
-            {
-                DestroyImmediate(component, true);
-            }
+            componentsToRemove = targetGameObject.GetComponents<Component>()
+                .Where(c => !(c is Transform) && !(c is SkinnedMeshRenderer)&& !(c is VRCPhysBone) && !(c is VRCPhysBoneCollider))
+                .ToList();
+        }
+        else
+        {
+            componentsToRemove = targetGameObject.GetComponents<Component>()
+                .Where(c => !(c is Transform) && !(c is SkinnedMeshRenderer))
+                .ToList();
+        }
+
+        foreach (var component in componentsToRemove)
+        {
+            DestroyImmediate(component, true);
         }
     }
 
