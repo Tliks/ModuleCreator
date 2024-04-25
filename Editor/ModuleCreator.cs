@@ -61,7 +61,7 @@ public class ModuleCreator : Editor
         }
     }
 
-    private static (GameObject, int) CheckObjects(GameObject targetObject)
+    private static GameObject CheckRoot(GameObject targetObject)
     {
         //親オブジェクトが存在するか確認
         Transform parent = targetObject.transform.parent;
@@ -70,8 +70,12 @@ public class ModuleCreator : Editor
             throw new InvalidOperationException("アバター(衣装)直下のSkinnedMeshRendererがついたオブジェクトを選択してください");
         }
         GameObject root = parent.gameObject;
+        return root;
+    }
 
-        //armatureがあるか確認
+    private static void CheckArmature(GameObject root)
+    {
+        //armatureが存在するか確認
         GameObject armature = null;
         foreach (Transform child in root.transform)
         {
@@ -85,13 +89,24 @@ public class ModuleCreator : Editor
         {
             throw new InvalidOperationException("Armature object not found under the root object.");
         }
+    }
 
+    private static void CheckSkin(GameObject targetObject)
+    {
         //SkinnedMeshRendererがついたオブジェクトか確認
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer == null)
         {
             throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
         }
+
+    }
+
+    private static (GameObject, int) CheckObjects(GameObject targetObject)
+    {
+        GameObject root = CheckRoot(targetObject);
+        CheckArmature(root);
+        CheckSkin(targetObject);
 
         //skin_index: 複製先でSkinnedMeshRendererがついたオブジェクトを追跡するためのインデックス
         Transform[] AllChildren = GetAllChildren(root);
@@ -169,8 +184,8 @@ public class ModuleCreator : Editor
 
         if (includePhysBone == true) 
         {
-            HashSet<GameObject> PhysBoneTransforms = FindPhysBoneTransforms(new_root, weightedBones);
-            objectsToSave.UnionWith(PhysBoneTransforms);
+            HashSet<GameObject> PhysBoneObjects = FindPhysBoneObjects(new_root, weightedBones);
+            objectsToSave.UnionWith(PhysBoneObjects);
         }
 
         CheckAndDeleteRecursive(new_root, objectsToSave);
@@ -245,39 +260,36 @@ public class ModuleCreator : Editor
         }
     }
 
-    private static HashSet<GameObject> FindPhysBoneTransforms(GameObject root, HashSet<GameObject> weightedBones)
+    private static HashSet<GameObject> FindPhysBoneObjects(GameObject root, HashSet<GameObject> weightedBones)
     {
-        var physBoneTransforms = new HashSet<GameObject>();
+        var physBoneObjects = new HashSet<GameObject>();
 
         foreach (VRCPhysBone physBone in root.GetComponentsInChildren<VRCPhysBone>(true))
         {
             if (physBone.rootTransform == null) physBone.rootTransform = physBone.transform;
-            var weightedPBTransforms = GetWeightedPhysBoneTransforms(physBone.rootTransform, weightedBones);
-            if (weightedPBTransforms.Count > 0)
+            var weightedPBObjects = GetWeightedPhysBoneObjects(physBone.rootTransform, weightedBones);
+            if (weightedPBObjects.Count > 0)
             {
-                physBoneTransforms.Add(physBone.gameObject);
-                physBoneTransforms.UnionWith(weightedPBTransforms);
+                physBoneObjects.Add(physBone.gameObject);
+                physBoneObjects.UnionWith(weightedPBObjects);
 
                 foreach (VRCPhysBoneCollider collider in physBone.colliders)
                 {
                     if (collider.rootTransform == null) collider.rootTransform = collider.transform;
-                    physBoneTransforms.Add(collider.gameObject);
-                    physBoneTransforms.Add(collider.rootTransform.gameObject);
+                    physBoneObjects.Add(collider.gameObject);
+                    physBoneObjects.Add(collider.rootTransform.gameObject);
                 }
             }
-            else
-            {
-                DestroyImmediate(physBone, true);
-            }
+            else DestroyImmediate(physBone, true);
         }
 
-        RemoveUnusedPhysBoneColliders(root, physBoneTransforms);
-        return physBoneTransforms;
+        RemoveUnusedPhysBoneColliders(root, physBoneObjects);
+        return physBoneObjects;
     }
 
-    private static HashSet<GameObject> GetWeightedPhysBoneTransforms(Transform rootTransform, HashSet<GameObject> weightedBones)
+    private static HashSet<GameObject> GetWeightedPhysBoneObjects(Transform rootTransform, HashSet<GameObject> weightedBones)
     {
-        var weightedPBTransforms = new HashSet<GameObject>();
+        var WeightedPhysBoneObjects = new HashSet<GameObject>();
 
         foreach (Transform child in GetAllChildren(rootTransform.gameObject))
         {
@@ -285,18 +297,18 @@ public class ModuleCreator : Editor
             {
                 HashSet<GameObject> result = new HashSet<GameObject>();
                 AddSingleChildRecursive(child, result);
-                weightedPBTransforms.UnionWith(result);
+                WeightedPhysBoneObjects.UnionWith(result);
             }
         }
 
-        return weightedPBTransforms;
+        return WeightedPhysBoneObjects;
     }
 
-    private static void RemoveUnusedPhysBoneColliders(GameObject root, HashSet<GameObject> physBoneTransforms)
+    private static void RemoveUnusedPhysBoneColliders(GameObject root, HashSet<GameObject> physBoneObjects)
     {
         foreach (VRCPhysBoneCollider collider in root.GetComponentsInChildren<VRCPhysBoneCollider>(true))
         {
-            if (!physBoneTransforms.Contains(collider.gameObject))
+            if (!physBoneObjects.Contains(collider.gameObject))
             {
                 DestroyImmediate(collider, true);
             }
