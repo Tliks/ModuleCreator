@@ -77,7 +77,8 @@ public class ModuleCreator
         }
         if (armature == null)
         {
-            throw new InvalidOperationException("Armature object not found under the root object.");
+            //throw new InvalidOperationException("Armature object not found under the root object.");
+            Debug.LogWarning("Armature object not found under the root object.");
         }
     }
 
