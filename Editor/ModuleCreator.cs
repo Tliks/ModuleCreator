@@ -8,7 +8,7 @@ using VRC.SDK3.Dynamics.PhysBone.Components;
 public class ModuleCreator : Editor
 {
     private const int MENU_PRIORITY = 49;
-    private static bool includePhysBone = false;
+    private static bool includePhysBone = true;
     
     [MenuItem("GameObject/Module Creator/Create Module", false, MENU_PRIORITY)]
     private static void CreateModule(MenuCommand menuCommand)
@@ -25,7 +25,7 @@ public class ModuleCreator : Editor
         CheckAndCopyBones(sourceObject);
     }
 
-    [MenuItem("GameObject/Module Creator/Create Module without PhysBone", false, MENU_PRIORITY)]
+    //[MenuItem("GameObject/Module Creator/Create Module without PhysBone", false, MENU_PRIORITY)]
     private static void CreateModuleWithoutPhysBone(MenuCommand menuCommand)
     {
         GameObject sourceObject = menuCommand.context as GameObject;
