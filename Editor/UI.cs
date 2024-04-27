@@ -7,6 +7,8 @@ public class ModuleCreatorWindow : EditorWindow
     private static ModuleCreatorSettings settings;
     private const int MENU_PRIORITY = 49;
 
+    private bool showAdvancedSettings = false;
+
     [MenuItem("GameObject/Module Creator/Create Module", false, MENU_PRIORITY)]
     private static void CreateModule(MenuCommand menuCommand)
     {
@@ -42,10 +44,19 @@ public class ModuleCreatorWindow : EditorWindow
         // Checkboxes
         settings.IncludePhysBone = EditorGUILayout.Toggle("PhysBone ", settings.IncludePhysBone);
 
-        GUI.enabled = settings.includePhysBone;
+        if (settings.IncludePhysBone == false) settings.IncludePhysBoneColider = false;
         GUI.enabled = settings.IncludePhysBone;
         settings.IncludePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", settings.IncludePhysBoneColider);
         GUI.enabled = true;
+
+        showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings");
+        if (showAdvancedSettings)
+        {
+            if (settings.IncludePhysBone == false) settings.RenameRootTransform = false;
+            GUI.enabled = settings.IncludePhysBone;
+            settings.RenameRootTransform = EditorGUILayout.Toggle("Rename RootTransform", settings.RenameRootTransform);
+            GUI.enabled = true;
+        }
 
         //settings.LogSettings();
         
