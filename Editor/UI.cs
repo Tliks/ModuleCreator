@@ -40,11 +40,11 @@ public class ModuleCreatorWindow : EditorWindow
         skinnedMeshRenderer = (SkinnedMeshRenderer)EditorGUILayout.ObjectField("Skinned Mesh Renderer", skinnedMeshRenderer, typeof(SkinnedMeshRenderer), true);
 
         // Checkboxes
-        settings.includePhysBone = EditorGUILayout.Toggle("PhysBone ", settings.includePhysBone);
+        settings.IncludePhysBone = EditorGUILayout.Toggle("PhysBone ", settings.IncludePhysBone);
 
         GUI.enabled = settings.includePhysBone;
-        settings.includePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", settings.includePhysBoneColider);
-        settings.renameRootTransform = EditorGUILayout.Toggle("Rename RootTransform", settings.renameRootTransform);
+        GUI.enabled = settings.IncludePhysBone;
+        settings.IncludePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", settings.IncludePhysBoneColider);
         GUI.enabled = true;
 
         //settings.LogSettings();

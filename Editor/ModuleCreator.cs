@@ -7,27 +7,27 @@ using VRC.SDK3.Dynamics.PhysBone.Components;
 
 public class ModuleCreatorSettings
 {
-    public bool includePhysBone = true;
-    public bool includePhysBoneColider = true;
-    public bool renameRootTransform = false;
+    public bool IncludePhysBone = true;
+    public bool IncludePhysBoneColider = true;
+    public bool RenameRootTransform = false;
 
     public void LogSettings()
     {
         Debug.Log("Module Creator Settings:");
-        Debug.Log($"PhysBone: {includePhysBone}");
-        Debug.Log($"PhysBoneColider: {includePhysBoneColider}");
-        Debug.Log($"RenameRootTransform: {renameRootTransform}");
+        Debug.Log($"PhysBone: {IncludePhysBone}");
+        Debug.Log($"PhysBoneColider: {IncludePhysBoneColider}");
+        Debug.Log($"RenameRootTransform: {RenameRootTransform}");
     }
 }
 
 
 public class ModuleCreator
 {
-    private ModuleCreatorSettings settings;
+    private ModuleCreatorSettings Settings;
 
     public ModuleCreator(ModuleCreatorSettings settings)
     {
-        this.settings = settings;
+        Settings = settings;
     }
     
     public void CheckAndCopyBones(GameObject sourceObject)
@@ -38,7 +38,7 @@ public class ModuleCreator
 
             (GameObject new_root, string variantPath) = CopyRootObject(root, sourceObject.name);
 
-            CleanUpHierarchy(new_root, skin_index, settings);
+            CleanUpHierarchy(new_root, skin_index, Settings);
 
             PrefabUtility.InstantiatePrefab(new_root);
             
@@ -171,7 +171,7 @@ public class ModuleCreator
         HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
         objectsToSave.UnionWith(weightedBones);
 
-        if (settings.includePhysBone == true) 
+        if (settings.IncludePhysBone == true) 
         {
             HashSet<GameObject> PhysBoneObjects = FindPhysBoneObjects(new_root, weightedBones);
             objectsToSave.UnionWith(PhysBoneObjects);
@@ -227,7 +227,7 @@ public class ModuleCreator
     {
         // Componentを列挙し、Transform、SkinnedMeshRenderer、(VRCPhysBone、VRCPhysBoneCollider)以外を削除
         List<Component> componentsToRemove;
-        if (settings.includePhysBone == true)
+        if (Settings.IncludePhysBone == true)
         {
             componentsToRemove = targetGameObject.GetComponents<Component>()
                 .Where(c => !(c is Transform) && !(c is SkinnedMeshRenderer)&& !(c is VRCPhysBone) && !(c is VRCPhysBoneCollider))
@@ -269,7 +269,7 @@ public class ModuleCreator
             if (weightedPBObjects.Count > 0)
             {
                 //MAの仕様に反し衣装側のPBを強制
-                if (settings.renameRootTransform == true)
+                if (Settings.RenameRootTransform == true)
                 {
                     physBone.rootTransform.name = $"{physBone.rootTransform.name}.1";
                 }
@@ -277,7 +277,7 @@ public class ModuleCreator
                 physBoneObjects.Add(physBone.gameObject);
                 physBoneObjects.UnionWith(weightedPBObjects);
 
-                if (settings.includePhysBoneColider == true)
+                if (Settings.IncludePhysBoneColider == true)
                 {
                     foreach (VRCPhysBoneCollider collider in physBone.colliders)
                     {
@@ -290,7 +290,7 @@ public class ModuleCreator
             else UnityEngine.Object.DestroyImmediate(physBone, true);
         }
 
-        if (settings.includePhysBoneColider == true) RemoveUnusedPhysBoneColliders(root, physBoneObjects);
+        if (Settings.IncludePhysBoneColider == true) RemoveUnusedPhysBoneColliders(root, physBoneObjects);
         return physBoneObjects;
     }
 
@@ -318,9 +318,10 @@ public class ModuleCreator
             if (physBoneObjects.Contains(collider.gameObject))
             {
                 //MAの仕様に反し衣装側のPBCを強制
-                if (settings.renameRootTransform == true)
+                if (Settings.RenameRootTransform == true)
                 {
                     collider.rootTransform.name = $"{collider.rootTransform.name}.1";
+                    //Debug.Log(collider.rootTransform.name);
                 }
             }
             else
