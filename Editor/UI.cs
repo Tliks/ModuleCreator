@@ -14,22 +14,16 @@ public class ModuleCreatorWindow : EditorWindow
     {
         GameObject sourceObject = menuCommand.context as GameObject;
 
-        if (sourceObject == null)
-        {
-            Debug.LogError("Target object is not set.");
-            return;
-        }
-
         settings = new ModuleCreatorSettings();
         ModuleCreator moduleCreator = new ModuleCreator(settings);
-        //settings.LogSettings();
+        
         moduleCreator.CheckAndCopyBones(sourceObject);
     }
 
-    [MenuItem("Window/ModuleCreator")]
+    [MenuItem("Window/Module Creator")]
     public static void ShowWindow()
     {
-        GetWindow<ModuleCreatorWindow>("ModuleCreator");
+        GetWindow<ModuleCreatorWindow>("Module Creator");
     }
 
     private void OnEnable()

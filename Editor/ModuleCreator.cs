@@ -96,8 +96,18 @@ public class ModuleCreator
 
     }
 
+    private void Checktarget(GameObject targetObject)
+    {
+        if (targetObject == null)
+        {
+            throw new InvalidOperationException("Target object is not set.");
+        }
+
+    }
+
     private (GameObject, int) CheckObjects(GameObject targetObject)
     {
+        Checktarget(targetObject);
         GameObject root = CheckRoot(targetObject);
         CheckArmature(root);
         CheckSkin(targetObject);
@@ -258,8 +268,6 @@ public class ModuleCreator
             AddSingleChildRecursive(child, result);
         }
     }
-
-
 
     private HashSet<GameObject> FindPhysBoneObjects(GameObject root, HashSet<GameObject> weightedBones)
     {
