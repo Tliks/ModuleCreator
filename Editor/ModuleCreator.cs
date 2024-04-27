@@ -175,8 +175,6 @@ public class ModuleCreator : Editor
         //複製先のSkinnedMeshRendererがついたオブジェクトを取得
         Transform[] AllChildren = GetAllChildren(new_root);
         GameObject skin = AllChildren[skin_index].gameObject;
-        skin.SetActive(true);
-        skin.tag = "Untagged"; 
         objectsToSave.Add(skin);
 
         HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
@@ -204,6 +202,7 @@ public class ModuleCreator : Editor
         // 削除しない条件
         if (objectsToSave.Contains(obj) || obj.transform.childCount != 0)
         {
+            ActivateObject(obj);
             RemoveComponents(obj);
             return;
         }
@@ -225,6 +224,12 @@ public class ModuleCreator : Editor
     {
         Transform[] children = parent.GetComponentsInChildren<Transform>(true);
         return children;
+    }
+
+    private static void ActivateObject(GameObject obj)
+    {
+        obj.SetActive(true);
+        obj.tag = "Untagged"; 
     }
 
     private static void RemoveComponents(GameObject targetGameObject)
