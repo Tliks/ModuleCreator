@@ -11,6 +11,8 @@ public class ModuleCreatorSettings
     public bool IncludePhysBoneColider = true;
     public bool RenameRootTransform = false;
 
+    public GameObject RootObject = null;
+
     public void LogSettings()
     {
         Debug.Log("Module Creator Settings:");
@@ -53,6 +55,7 @@ public class ModuleCreator
 
     private GameObject CheckRoot(GameObject targetObject)
     {
+        if (Settings.RootObject) return Settings.RootObject;
         //親オブジェクトが存在するか確認
         Transform parent = targetObject.transform.parent;
         if (parent == null)

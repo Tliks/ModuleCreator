@@ -56,6 +56,8 @@ public class ModuleCreatorWindow : EditorWindow
             GUI.enabled = settings.IncludePhysBone;
             settings.RenameRootTransform = EditorGUILayout.Toggle("Rename RootTransform", settings.RenameRootTransform);
             GUI.enabled = true;
+
+            settings.RootObject = (GameObject)EditorGUILayout.ObjectField("Root", settings.RootObject, typeof(GameObject), true);
         }
 
         //settings.LogSettings();
