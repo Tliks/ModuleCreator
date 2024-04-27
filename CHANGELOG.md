@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.2] - 2024-04-27
+### Changed
+- Relaxed error to warning for armature search 
+
 ## [0.3.1] - 2024-04-23
 ### Changed
 - Save as prefab variant if possible 
