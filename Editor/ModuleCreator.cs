@@ -67,13 +67,15 @@ public class ModuleCreator : Editor
         }
         if (armature == null)
         {
-            throw new InvalidOperationException("Armature object not found under the root object.");
+            Debug.LogWarning("Armature object not found under the root object.");
+            //throw new InvalidOperationException("Armature object not found under the root object.");
         }
 
         //SkinnedMeshRendererがついたオブジェクトか確認
         SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
         if (skinnedMeshRenderer == null)
         {
+            
             throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
         }
 
