@@ -7,7 +7,7 @@
 - Add option to rename PhysBone RootTransform
 - Add option to specify Root Object
 
-## Changed
+### Changed
 - All unnecessary components will be removed
 
 ### Fixed
