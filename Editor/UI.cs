@@ -16,7 +16,7 @@ public class ModuleCreatorWindow : EditorWindow
 
         settings = new ModuleCreatorSettings();
         ModuleCreator moduleCreator = new ModuleCreator(settings);
-        
+
         moduleCreator.CheckAndCopyBones(sourceObject);
     }
 
@@ -35,6 +35,8 @@ public class ModuleCreatorWindow : EditorWindow
     {
         skinnedMeshRenderer = (SkinnedMeshRenderer)EditorGUILayout.ObjectField("Skinned Mesh Renderer", skinnedMeshRenderer, typeof(SkinnedMeshRenderer), true);
 
+        //EditorGUILayout.Space(); 
+
         // Checkboxes
         settings.IncludePhysBone = EditorGUILayout.Toggle("PhysBone ", settings.IncludePhysBone);
 
@@ -42,6 +44,8 @@ public class ModuleCreatorWindow : EditorWindow
         GUI.enabled = settings.IncludePhysBone;
         settings.IncludePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", settings.IncludePhysBoneColider);
         GUI.enabled = true;
+
+        EditorGUILayout.Space(); 
 
         showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings");
         if (showAdvancedSettings)
@@ -55,6 +59,8 @@ public class ModuleCreatorWindow : EditorWindow
         }
 
         //settings.LogSettings();
+
+        EditorGUILayout.Space(); 
         
         GUI.enabled = skinnedMeshRenderer != null;
         if (GUILayout.Button("Create Module"))
