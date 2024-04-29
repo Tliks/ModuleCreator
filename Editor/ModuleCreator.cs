@@ -260,7 +260,7 @@ public class ModuleCreator
         }
     }
 
-    private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result, List<Transform> ignoreTransforms)
+    private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result, HashSet<Transform> ignoreTransforms)
     {   
         if (ignoreTransforms.Contains(transform)) return;
         result.Add(transform.gameObject);   
@@ -269,6 +269,22 @@ public class ModuleCreator
             Transform child = transform.GetChild(0);
             AddSingleChildRecursive(child, result, ignoreTransforms);
         }
+    }
+
+    private HashSet<Transform> GetIgnoreTransforms(VRCPhysBone physBone)
+    {
+        HashSet<Transform> AffectedIgnoreTransforms = new HashSet<Transform>();
+
+        foreach (Transform ignoreTransform in physBone.ignoreTransforms)
+        {   
+            Transform[] AffectedIgnoreTransform = GetAllChildren(ignoreTransform.gameObject);
+            foreach (Transform transfomrm in AffectedIgnoreTransform)
+            {
+                AffectedIgnoreTransforms.Add(transfomrm);
+            }
+        }
+
+        return AffectedIgnoreTransforms;
     }
 
     private HashSet<GameObject> FindPhysBoneObjects(GameObject root, HashSet<GameObject> weightedBones)
@@ -310,7 +326,7 @@ public class ModuleCreator
     private HashSet<GameObject> GetWeightedPhysBoneObjects(VRCPhysBone physBone, HashSet<GameObject> weightedBones)
     {
         var WeightedPhysBoneObjects = new HashSet<GameObject>();
-        List<Transform> ignoreTransforms = physBone.ignoreTransforms;
+        HashSet<Transform> ignoreTransforms = GetIgnoreTransforms(physBone);
 
         foreach (Transform child in GetAllChildren(physBone.rootTransform.gameObject))
         {
