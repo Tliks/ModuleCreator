@@ -260,13 +260,14 @@ public class ModuleCreator
         }
     }
 
-    private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result)
-    {
-        result.Add(transform.gameObject);
+    private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result, List<Transform> ignoreTransforms)
+    {   
+        if (ignoreTransforms.Contains(transform)) return;
+        result.Add(transform.gameObject);   
         if (transform.childCount == 1)
         {
             Transform child = transform.GetChild(0);
-            AddSingleChildRecursive(child, result);
+            AddSingleChildRecursive(child, result, ignoreTransforms);
         }
     }
 
@@ -306,45 +307,17 @@ public class ModuleCreator
         return physBoneObjects;
     }
 
-    private HashSet<Transform> AddAffectedTransformsRecursive(HashSet<Transform> affectedTransforms, List<Transform> ignoreTransforms, Transform Transform)
-    {
-        affectedTransforms.Add(Transform);
-
-        foreach (Transform child in Transform)
-        {
-            if (ignoreTransforms.Contains(child))
-            {
-                Debug.Log(Transform.gameObject.name);
-                continue;
-            }
-
-            else
-            {
-                AddAffectedTransformsRecursive(affectedTransforms, ignoreTransforms, child);
-            }
-        }
-
-        return affectedTransforms;
-    }
-
-    private HashSet<Transform> GetAffectedTransforms(VRCPhysBone physBone)
-    {
-        List<Transform> ignoreTransforms = physBone.ignoreTransforms;
-        HashSet<Transform> affectedTransforms = new HashSet<Transform>();
-        affectedTransforms = AddAffectedTransformsRecursive(affectedTransforms, ignoreTransforms, physBone.rootTransform);
-        return affectedTransforms;
-    }
-
     private HashSet<GameObject> GetWeightedPhysBoneObjects(VRCPhysBone physBone, HashSet<GameObject> weightedBones)
     {
         var WeightedPhysBoneObjects = new HashSet<GameObject>();
+        List<Transform> ignoreTransforms = physBone.ignoreTransforms;
 
-        foreach (Transform child in GetAffectedTransforms(physBone))
+        foreach (Transform child in GetAllChildren(physBone.rootTransform.gameObject))
         {
             if (weightedBones.Contains(child.gameObject))
             {
                 HashSet<GameObject> result = new HashSet<GameObject>();
-                AddSingleChildRecursive(child, result);
+                AddSingleChildRecursive(child, result, ignoreTransforms);
                 WeightedPhysBoneObjects.UnionWith(result);
             }
         }
