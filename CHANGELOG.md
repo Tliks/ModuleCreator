@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Added
+- Added tooltip to advanced settings
+- Added option to output additional PhysBones Affected Transforms
 
 ### Changed
 - Changed to assume IgnoreTransforms
@@ -11,6 +13,7 @@
 ### Removed
 
 ### Fixed
+- Fixed issue that settings was shared
 
 ### Security
 
