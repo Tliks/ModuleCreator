@@ -9,8 +9,9 @@ public class ModuleCreatorSettings
 {
     public bool IncludePhysBone = true;
     public bool IncludePhysBoneColider = true;
-    public bool RenameRootTransform = false;
 
+    public bool RenameRootTransform = false;
+    public bool RemainAllPBTransforms = false;
     public GameObject RootObject = null;
 
     public void LogSettings()
@@ -328,10 +329,18 @@ public class ModuleCreator
         var WeightedPhysBoneObjects = new HashSet<GameObject>();
         HashSet<Transform> ignoreTransforms = GetIgnoreTransforms(physBone);
 
-        foreach (Transform child in GetAllChildren(physBone.rootTransform.gameObject))
+        Transform[] allchildren = GetAllChildren(physBone.rootTransform.gameObject);
+
+        foreach (Transform child in allchildren)
         {
             if (weightedBones.Contains(child.gameObject))
             {
+                if (Settings.RemainAllPBTransforms == true)
+                {
+                    WeightedPhysBoneObjects.UnionWith(allchildren.Select(t => t.gameObject));
+                    break;
+
+                }
                 HashSet<GameObject> result = new HashSet<GameObject>();
                 AddSingleChildRecursive(child, result, ignoreTransforms);
                 WeightedPhysBoneObjects.UnionWith(result);
