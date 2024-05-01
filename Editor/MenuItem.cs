@@ -4,7 +4,7 @@ using UnityEngine;
 public class ModuleCreatorWindow : EditorWindow
 {
     public SkinnedMeshRenderer skinnedMeshRenderer;
-    private static ModuleCreatorSettings settings;
+    private static ModuleCreatorSettings Settings;
     private const int MENU_PRIORITY = 49;
 
     private bool showAdvancedSettings = false;
@@ -14,7 +14,7 @@ public class ModuleCreatorWindow : EditorWindow
     {
         GameObject sourceObject = menuCommand.context as GameObject;
 
-        settings = new ModuleCreatorSettings();
+        ModuleCreatorSettings settings = new ModuleCreatorSettings();
         ModuleCreator moduleCreator = new ModuleCreator(settings);
 
         moduleCreator.CheckAndCopyBones(sourceObject);
@@ -28,7 +28,7 @@ public class ModuleCreatorWindow : EditorWindow
 
     private void OnEnable()
     {
-        settings = new ModuleCreatorSettings();
+        Settings = new ModuleCreatorSettings();
     }
 
     private void OnGUI()
@@ -38,11 +38,11 @@ public class ModuleCreatorWindow : EditorWindow
         //EditorGUILayout.Space(); 
 
         // Checkboxes
-        settings.IncludePhysBone = EditorGUILayout.Toggle("PhysBone ", settings.IncludePhysBone);
+        Settings.IncludePhysBone = EditorGUILayout.Toggle("PhysBone ", Settings.IncludePhysBone);
 
-        if (settings.IncludePhysBone == false) settings.IncludePhysBoneColider = false;
-        GUI.enabled = settings.IncludePhysBone;
-        settings.IncludePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", settings.IncludePhysBoneColider);
+        if (Settings.IncludePhysBone == false) Settings.IncludePhysBoneColider = false;
+        GUI.enabled = Settings.IncludePhysBone;
+        Settings.IncludePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", Settings.IncludePhysBoneColider);
         GUI.enabled = true;
 
         EditorGUILayout.Space(); 
@@ -50,21 +50,21 @@ public class ModuleCreatorWindow : EditorWindow
         showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings");
         if (showAdvancedSettings)
         {
-            if (settings.IncludePhysBone == false) settings.RenameRootTransform = false;
-            GUI.enabled = settings.IncludePhysBone;
-            GUIContent content_rr = new GUIContent("Rename RootTransform");
-            content_rr.tooltip = "Contrary to the specifications of modular avatar, where the physbone on the costume side is deleted when merging by merge armature in some cases, rename physbone RootTransform to ensure that the physbone on the costume side is integrated. May lead to duplication of physbone";
-            settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, settings.RenameRootTransform);
-            GUI.enabled = true;
-            
-            if (settings.IncludePhysBone == false) settings.RemainAllPBTransforms = false;
-            GUI.enabled = settings.IncludePhysBone;
+            if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
+            GUI.enabled = Settings.IncludePhysBone;
             GUIContent content_at = new GUIContent("Additional Transforms");
             content_at.tooltip = "Output Additional PhysBones Affected Transforms for exact PhysBone movement";
-            settings.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, settings.RemainAllPBTransforms);
+            Settings.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, Settings.RemainAllPBTransforms);
             GUI.enabled = true;
 
-            settings.RootObject = (GameObject)EditorGUILayout.ObjectField("Specify Root Object", settings.RootObject, typeof(GameObject), true);
+            if (Settings.IncludePhysBone == false) Settings.RenameRootTransform = false;
+            GUI.enabled = Settings.IncludePhysBone;
+            GUIContent content_rr = new GUIContent("Rename RootTransform");
+            content_rr.tooltip = "not recommended: Contrary to the specifications of modular avatar, where the physbone on the costume side is deleted when merging by merge armature in some cases, rename physbone RootTransform to ensure that the physbone on the costume side is integrated. May lead to duplication of physbone";
+            Settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, Settings.RenameRootTransform);
+            GUI.enabled = true;
+            
+            Settings.RootObject = (GameObject)EditorGUILayout.ObjectField("Specify Root Object", Settings.RootObject, typeof(GameObject), true);
         }
 
         //settings.LogSettings();
@@ -74,7 +74,7 @@ public class ModuleCreatorWindow : EditorWindow
         GUI.enabled = skinnedMeshRenderer != null;
         if (GUILayout.Button("Create Module"))
         {
-            ModuleCreator moduleCreator = new ModuleCreator(settings);
+            ModuleCreator moduleCreator = new ModuleCreator(Settings);
             moduleCreator.CheckAndCopyBones(skinnedMeshRenderer.gameObject);
         }
         GUI.enabled = true;
