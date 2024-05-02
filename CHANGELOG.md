@@ -4,6 +4,7 @@
 ### Added
 - Added tooltip to advanced settings
 - Added option to output additional PhysBones Affected Transforms
+- Added Hips search for warnig
 
 ### Changed
 - Changed to assume IgnoreTransforms
@@ -11,6 +12,7 @@
 ### Deprecated
 
 ### Removed
+- armature search
 
 ### Fixed
 - Fixed issue that settings was shared

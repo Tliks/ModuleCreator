@@ -23,8 +23,6 @@ public class ModuleCreatorSettings
     }
 }
 
-//test
-
 public class ModuleCreator
 {
     private ModuleCreatorSettings Settings;
@@ -68,22 +66,25 @@ public class ModuleCreator
         return root;
     }
 
-    private void CheckArmature(GameObject root)
+    private void CheckHips(GameObject root)
     {
-        //armatureが存在するか確認
-        GameObject armature = null;
+        // Check if Hips exists under the root node
+        GameObject hips = null;
         foreach (Transform child in root.transform)
         {
-            if (child.name.ToLower().StartsWith("armature"))
+            foreach (Transform grandChild in child.transform)
             {
-                armature = child.gameObject;
-                break;
+                if (grandChild.name.ToLower().StartsWith("hip"))
+                {
+                    hips = grandChild.gameObject;
+                    break;
+                }
             }
         }
-        if (armature == null)
+        if (hips == null)
         {
-            //throw new InvalidOperationException("Armature object not found under the root object.");
-            Debug.LogWarning("Armature object not found under the root object.");
+            //throw new InvalidOperationException("Hips not found under the root object.");
+            Debug.LogWarning("Hips not found under the root object.");
         }
     }
 
@@ -95,7 +96,6 @@ public class ModuleCreator
         {
             throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
         }
-
     }
 
     private void Checktarget(GameObject targetObject)
@@ -111,7 +111,7 @@ public class ModuleCreator
     {
         Checktarget(targetObject);
         GameObject root = CheckRoot(targetObject);
-        CheckArmature(root);
+        CheckHips(root);
         CheckSkin(targetObject);
 
         //skin_index: 複製先でSkinnedMeshRendererがついたオブジェクトを追跡するためのインデックス
