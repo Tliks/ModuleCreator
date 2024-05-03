@@ -57,10 +57,17 @@ public class ModuleCreatorWindow : EditorWindow
             Settings.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, Settings.RemainAllPBTransforms);
             GUI.enabled = true;
 
+            if (Settings.IncludePhysBone == false) Settings.IncludeIgnoreTransforms = false;
+            GUI.enabled = Settings.IncludePhysBone;
+            GUIContent content_ii = new GUIContent("Include IgnoreTransforms");
+            content_ii.tooltip = "Output PhysBone's IgnoreTransforms";
+            Settings.IncludeIgnoreTransforms = EditorGUILayout.Toggle(content_ii, Settings.IncludeIgnoreTransforms);
+            GUI.enabled = true;
+
             if (Settings.IncludePhysBone == false) Settings.RenameRootTransform = false;
             GUI.enabled = Settings.IncludePhysBone;
             GUIContent content_rr = new GUIContent("Rename RootTransform");
-            content_rr.tooltip = "not recommended: Contrary to the specifications of modular avatar, where the physbone on the costume side is deleted when merging by merge armature in some cases, rename physbone RootTransform to ensure that the physbone on the costume side is integrated. May lead to duplication of physbone";
+            content_rr.tooltip = "not recommended: Contrary to the specifications of modular avatar, where the physbone on the costume side is deleted by merge armature in some cases, rename physbone RootTransform to ensure that the physbone on the costume side is integrated. May lead to duplication of physbone";
             Settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, Settings.RenameRootTransform);
             GUI.enabled = true;
             

@@ -12,6 +12,7 @@ public class ModuleCreatorSettings
 
     public bool RenameRootTransform = false;
     public bool RemainAllPBTransforms = false;
+    public bool IncludeIgnoreTransforms = false;
     public GameObject RootObject = null;
 
     public void LogSettings()
@@ -263,7 +264,7 @@ public class ModuleCreator
 
     private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result, HashSet<Transform> ignoreTransforms)
     {   
-        if (ignoreTransforms.Contains(transform)) return;
+        if (Settings.IncludeIgnoreTransforms == false && ignoreTransforms.Contains(transform)) return;
         result.Add(transform.gameObject);   
         if (transform.childCount == 1)
         {
@@ -279,10 +280,7 @@ public class ModuleCreator
         foreach (Transform ignoreTransform in physBone.ignoreTransforms)
         {   
             Transform[] AffectedIgnoreTransform = GetAllChildren(ignoreTransform.gameObject);
-            foreach (Transform transfomrm in AffectedIgnoreTransform)
-            {
-                AffectedIgnoreTransforms.Add(transfomrm);
-            }
+            AffectedIgnoreTransforms.UnionWith(AffectedIgnoreTransform);
         }
 
         return AffectedIgnoreTransforms;

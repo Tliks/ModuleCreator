@@ -5,6 +5,7 @@
 - Added tooltip to advanced settings
 - Added option to output additional PhysBones Affected Transforms
 - Added Hips search for warnig
+- Added option to include IgnoreTransforms
 
 ### Changed
 - Changed to assume IgnoreTransforms
