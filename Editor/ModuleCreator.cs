@@ -172,7 +172,7 @@ public class ModuleCreator
 
         if (hasNullBone)
         {
-            Debug.LogWarning("Some bones associated with the mesh could not be found. It may not work properly.");
+            throw new InvalidOperationException("Some bones associated with the mesh could not be found.");
         }
 
         return weightedBones;
