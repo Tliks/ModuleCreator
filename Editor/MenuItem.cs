@@ -7,7 +7,7 @@ public class ModuleCreatorWindow : EditorWindow
     private static ModuleCreatorSettings Settings;
     private const int MENU_PRIORITY = 49;
 
-    private bool showAdvancedSettings = false;
+    private bool showAdvancedOptions = false;
 
     [MenuItem("GameObject/Module Creator/Create Module", false, MENU_PRIORITY)]
     private static void CreateModule(MenuCommand menuCommand)
@@ -47,8 +47,8 @@ public class ModuleCreatorWindow : EditorWindow
 
         EditorGUILayout.Space(); 
 
-        showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings");
-        if (showAdvancedSettings)
+        showAdvancedOptions = EditorGUILayout.Foldout(showAdvancedOptions, "Advanced Options");
+        if (showAdvancedOptions)
         {
             //if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
             GUI.enabled = Settings.IncludePhysBone;
