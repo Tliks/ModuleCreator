@@ -134,16 +134,47 @@ public class ModuleCreator
     }
 
     private HashSet<GameObject> GetWeightedBones(SkinnedMeshRenderer skinnedMeshRenderer)
-    {   
+    {
         BoneWeight[] boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
         HashSet<GameObject> weightedBones = new HashSet<GameObject>();
+        bool hasNullBone = false;
+
         foreach (BoneWeight boneWeight in boneWeights)
         {
-            if (boneWeight.weight0 > 0) weightedBones.Add(skinnedMeshRenderer.bones[boneWeight.boneIndex0].gameObject);
-            if (boneWeight.weight1 > 0) weightedBones.Add(skinnedMeshRenderer.bones[boneWeight.boneIndex1].gameObject);
-            if (boneWeight.weight2 > 0) weightedBones.Add(skinnedMeshRenderer.bones[boneWeight.boneIndex2].gameObject);
-            if (boneWeight.weight3 > 0) weightedBones.Add(skinnedMeshRenderer.bones[boneWeight.boneIndex3].gameObject);
+            if (boneWeight.weight0 > 0)
+            {
+                Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex0];
+                if (boneTransform == null) hasNullBone = true;
+                else weightedBones.Add(boneTransform.gameObject);
+            }
+
+            if (boneWeight.weight1 > 0)
+            {
+                Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex1];
+                if (boneTransform == null) hasNullBone = true;
+                else weightedBones.Add(boneTransform.gameObject);
+            }
+
+            if (boneWeight.weight2 > 0)
+            {
+                Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex2];
+                if (boneTransform == null) hasNullBone = true;
+                else weightedBones.Add(boneTransform.gameObject);
+            }
+
+            if (boneWeight.weight3 > 0)
+            {
+                Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex3];
+                if (boneTransform == null) hasNullBone = true;
+                else weightedBones.Add(boneTransform.gameObject);
+            }
         }
+
+        if (hasNullBone)
+        {
+            Debug.LogWarning("Some bones associated with the mesh could not be found. It may not work properly.");
+        }
+
         return weightedBones;
     }
 
