@@ -37,7 +37,7 @@ public class ModuleCreator
 
             PrefabUtility.InstantiatePrefab(new_root);
             
-            Debug.Log("Saved to" + variantPath);
+            Debug.Log("Saved to " + variantPath);
 
         }
         catch (Exception ex)
