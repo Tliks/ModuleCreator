@@ -18,6 +18,7 @@
 - Fixed issue that settings was shared
 - Fixed an issue an error occurred when a null collider was associated with physBone.
 - Fixed an issue an error occurred when a null ignoreTransform was associated with physBone.
+- Fixed an issue an error was NullReferenceException when a bone associated with a mesh was not found.
 
 ### Security
 
