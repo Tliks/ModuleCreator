@@ -50,7 +50,7 @@ public class ModuleCreator
         }
         catch (Exception ex)
         {
-            Debug.LogError(ex.Message);
+            Debug.LogError(ex);
             Debug.LogError(ex.StackTrace);
         }
     }
