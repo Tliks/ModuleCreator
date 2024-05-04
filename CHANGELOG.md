@@ -1,5 +1,41 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- Added tooltip to advanced settings
+- Added option to output additional PhysBones Affected Transforms for exact movement
+- Added option to include IgnoreTransforms
+
+### Changed
+- Changed to assume IgnoreTransforms
+- Use Hips search instead of armature search
+
+### Deprecated
+
+### Removed
+
+### Fixed
+- Settings was shared.
+- Error occurred when a null collider was associated with physBone.
+- Error occurred when a null ignoreTransform was associated with physBone.
+- Error when a bone associated with a mesh cannot be found was not appropriate.
+
+### Security
+
+## [0.4.0-beta.1] - 2024-04-28
+### Added
+- Add window to Window/Module Creator
+- Add option to disable PhysBone/PhysBoneColider output
+- Add option to rename PhysBone RootTransform
+- Add option to specify Root Object
+
+### Changed
+- All unnecessary components will be removed
+
+### Fixed
+- Unnecessary PhysBone is not removed
+- Some objects are not active
+
 ## [0.3.2] - 2024-04-27
 ### Changed
 - Relaxed error to warning for armature search 
