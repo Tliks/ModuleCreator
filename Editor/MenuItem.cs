@@ -52,26 +52,26 @@ public class ModuleCreatorWindow : EditorWindow
         {
             //if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
             GUI.enabled = Settings.IncludePhysBone;
-            GUIContent content_at = new GUIContent("Additional Transforms");
-            content_at.tooltip = "Output Additional PhysBones Affected Transforms for exact PhysBone movement";
+            GUIContent content_at = new GUIContent("Additional Transforms", "Output Additional PhysBones Affected Transforms for exact PhysBone movement");
             Settings.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, Settings.RemainAllPBTransforms);
             GUI.enabled = true;
 
             //if (Settings.IncludePhysBone == false) Settings.IncludeIgnoreTransforms = false;
             GUI.enabled = Settings.IncludePhysBone;
-            GUIContent content_ii = new GUIContent("Include IgnoreTransforms");
-            content_ii.tooltip = "Output PhysBone's IgnoreTransforms";
+            GUIContent content_ii = new GUIContent("Include IgnoreTransforms", "Output PhysBone's IgnoreTransforms");
             Settings.IncludeIgnoreTransforms = EditorGUILayout.Toggle(content_ii, Settings.IncludeIgnoreTransforms);
             GUI.enabled = true;
 
             //if (Settings.IncludePhysBone == false) Settings.RenameRootTransform = false;
             GUI.enabled = Settings.IncludePhysBone;
-            GUIContent content_rr = new GUIContent("Rename RootTransform");
-            content_rr.tooltip = "not recommended: Contrary to the specifications of modular avatar, where the physbone on the costume side is deleted by merge armature in some cases, rename physbone RootTransform to ensure that the physbone on the costume side is integrated. May lead to duplication of physbone";
-            Settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, Settings.RenameRootTransform);
+            GUIContent content_rr = new GUIContent(
+                "Rename RootTransform", 
+                "Not Recommended: Due to the specifications of modular avatar, costume-side physbones may be deleted in some cases, so renaming physbone RootTransform will ensure that the costume-side physbones are integrated. This may cause duplication.");
+                Settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, Settings.RenameRootTransform);
             GUI.enabled = true;
             
-            Settings.RootObject = (GameObject)EditorGUILayout.ObjectField("Specify Root Object", Settings.RootObject, typeof(GameObject), true);
+            GUIContent content_sr = new GUIContent("Specify Root Object", "The default root object is the parent object of the specified skinned mesh rendrer object");
+            Settings.RootObject = (GameObject)EditorGUILayout.ObjectField(content_sr, Settings.RootObject, typeof(GameObject), true);
         }
 
         //settings.LogSettings();
