@@ -280,6 +280,7 @@ public class ModuleCreator
 
         foreach (Transform ignoreTransform in physBone.ignoreTransforms)
         {   
+            if (ignoreTransform == null) continue;
             Transform[] AffectedIgnoreTransform = GetAllChildren(ignoreTransform.gameObject);
             AffectedIgnoreTransforms.UnionWith(AffectedIgnoreTransform);
         }
@@ -310,6 +311,7 @@ public class ModuleCreator
                 {
                     foreach (VRCPhysBoneCollider collider in physBone.colliders)
                     {
+                        if (collider == null) continue;
                         if (collider.rootTransform == null) collider.rootTransform = collider.transform;
                         physBoneObjects.Add(collider.gameObject);
                         physBoneObjects.Add(collider.rootTransform.gameObject);
