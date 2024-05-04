@@ -86,7 +86,7 @@ public class ModuleCreator
         if (hips == null)
         {
             //throw new InvalidOperationException("Hips not found under the root object.");
-            Debug.LogWarning("Hips not found under the root object.");
+            Debug.LogWarning("Hips could not be found under the root object. Merge Armature may not work properly.");
         }
     }
 
