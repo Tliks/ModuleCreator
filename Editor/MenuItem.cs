@@ -40,7 +40,7 @@ public class ModuleCreatorWindow : EditorWindow
         // Checkboxes
         Settings.IncludePhysBone = EditorGUILayout.Toggle("PhysBone ", Settings.IncludePhysBone);
 
-        if (Settings.IncludePhysBone == false) Settings.IncludePhysBoneColider = false;
+        //if (Settings.IncludePhysBone == false) Settings.IncludePhysBoneColider = false;
         GUI.enabled = Settings.IncludePhysBone;
         Settings.IncludePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", Settings.IncludePhysBoneColider);
         GUI.enabled = true;
@@ -50,21 +50,21 @@ public class ModuleCreatorWindow : EditorWindow
         showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings");
         if (showAdvancedSettings)
         {
-            if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
+            //if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
             GUI.enabled = Settings.IncludePhysBone;
             GUIContent content_at = new GUIContent("Additional Transforms");
             content_at.tooltip = "Output Additional PhysBones Affected Transforms for exact PhysBone movement";
             Settings.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, Settings.RemainAllPBTransforms);
             GUI.enabled = true;
 
-            if (Settings.IncludePhysBone == false) Settings.IncludeIgnoreTransforms = false;
+            //if (Settings.IncludePhysBone == false) Settings.IncludeIgnoreTransforms = false;
             GUI.enabled = Settings.IncludePhysBone;
             GUIContent content_ii = new GUIContent("Include IgnoreTransforms");
             content_ii.tooltip = "Output PhysBone's IgnoreTransforms";
             Settings.IncludeIgnoreTransforms = EditorGUILayout.Toggle(content_ii, Settings.IncludeIgnoreTransforms);
             GUI.enabled = true;
 
-            if (Settings.IncludePhysBone == false) Settings.RenameRootTransform = false;
+            //if (Settings.IncludePhysBone == false) Settings.RenameRootTransform = false;
             GUI.enabled = Settings.IncludePhysBone;
             GUIContent content_rr = new GUIContent("Rename RootTransform");
             content_rr.tooltip = "not recommended: Contrary to the specifications of modular avatar, where the physbone on the costume side is deleted by merge armature in some cases, rename physbone RootTransform to ensure that the physbone on the costume side is integrated. May lead to duplication of physbone";
