@@ -14,14 +14,6 @@ public class ModuleCreatorSettings
     public bool RemainAllPBTransforms = false;
     public bool IncludeIgnoreTransforms = false;
     public GameObject RootObject = null;
-
-    public void LogSettings()
-    {
-        Debug.Log("Module Creator Settings:");
-        Debug.Log($"PhysBone: {IncludePhysBone}");
-        Debug.Log($"PhysBoneColider: {IncludePhysBoneColider}");
-        Debug.Log($"RenameRootTransform: {RenameRootTransform}");
-    }
 }
 
 public class ModuleCreator
@@ -45,7 +37,7 @@ public class ModuleCreator
 
             PrefabUtility.InstantiatePrefab(new_root);
             
-            Debug.Log(variantPath + "に保存されました");
+            Debug.Log("Saved to" + variantPath);
 
         }
         catch (Exception ex)
@@ -62,7 +54,7 @@ public class ModuleCreator
         Transform parent = targetObject.transform.parent;
         if (parent == null)
         {
-            throw new InvalidOperationException("アバター(衣装)直下のSkinnedMeshRendererがついたオブジェクトを選択してください");
+            throw new InvalidOperationException("Select the object with SkinnedMeshRenderer directly under the avatar/costume");
         }
         GameObject root = parent.gameObject;
         return root;
@@ -86,7 +78,7 @@ public class ModuleCreator
         if (hips == null)
         {
             //throw new InvalidOperationException("Hips not found under the root object.");
-            Debug.LogWarning("Hips could not be found under the root object. Merge Armature may not work properly.");
+            Debug.LogWarning("Hips could not be found. Merge Armature/Setup Outfit may not work properly.");
         }
     }
 
@@ -129,7 +121,7 @@ public class ModuleCreator
         // 指定のメッシュにウェイトを付けてるボーンの一覧を取得
         HashSet<GameObject> weightedBones = GetWeightedBones(skinnedMeshRenderer);
 
-        Debug.Log($"Bones influencing {targetObject.name}: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
+        Debug.Log($"Bones weighting {targetObject.name}: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
         return weightedBones;
     }
 
@@ -172,7 +164,7 @@ public class ModuleCreator
 
         if (hasNullBone)
         {
-            throw new InvalidOperationException("Some bones associated with the mesh could not be found.");
+            throw new InvalidOperationException("Some bones weighting mesh could not be found");
         }
 
         return weightedBones;
@@ -202,7 +194,7 @@ public class ModuleCreator
         GameObject new_root = PrefabUtility.SaveAsPrefabAsset(root_object, variantPath);        
         if (new_root == null)
         {
-            throw new InvalidOperationException("Prefabの作成に失敗しました。");
+            throw new InvalidOperationException("Prefab creation failed.");
         }
         return (new_root, variantPath);
     }
