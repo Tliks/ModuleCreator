@@ -355,6 +355,7 @@ public class ModuleCreator
         HashSet<Transform> ignoreTransforms = GetIgnoreTransforms(physBone);
 
         Transform[] allchildren = GetAllChildren(physBone.rootTransform.gameObject);
+        allchildren = allchildren.Where(t => t != physBone.rootTransform).ToArray();
 
         foreach (Transform child in allchildren)
         {
