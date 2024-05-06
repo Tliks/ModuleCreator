@@ -47,61 +47,6 @@ public class ModuleCreator
         }
     }
 
-    private GameObject CheckRoot(GameObject targetObject)
-    {
-        if (Settings.RootObject) return Settings.RootObject;
-        //親オブジェクトが存在するか確認
-        Transform parent = targetObject.transform.parent;
-        if (parent == null)
-        {
-            throw new InvalidOperationException("Select the object with SkinnedMeshRenderer directly under the avatar/costume");
-        }
-        GameObject root = parent.gameObject;
-        return root;
-    }
-
-    private void CheckHips(GameObject root)
-    {
-        // Check if Hips exists under the root node
-        GameObject hips = null;
-        foreach (Transform child in root.transform)
-        {
-            foreach (Transform grandChild in child.transform)
-            {
-                if (grandChild.name.ToLower().StartsWith("hip"))
-                {
-                    hips = grandChild.gameObject;
-                    break;
-                }
-            }
-        }
-        if (hips == null)
-        {
-            //throw new InvalidOperationException("Hips not found under the root object.");
-            Debug.LogWarning("Hips could not be found. Merge Armature/Setup Outfit may not work properly.");
-        }
-    }
-
-    private void CheckSkin(GameObject targetObject)
-    {
-        //SkinnedMeshRendererがついたオブジェクトか確認
-        SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
-        if (skinnedMeshRenderer == null)
-        {
-            
-            throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
-        }
-    }
-
-    private void Checktarget(GameObject targetObject)
-    {
-        if (targetObject == null)
-        {
-            throw new InvalidOperationException("Target object is not set.");
-        }
-
-    }
-
     private (GameObject, int) CheckObjects(GameObject targetObject)
     {
         Checktarget(targetObject);
@@ -114,6 +59,117 @@ public class ModuleCreator
         int skin_index = Array.IndexOf(AllChildren, targetObject.transform);
 
         return (root, skin_index);
+
+
+        void Checktarget(GameObject targetObject)
+        {
+            if (targetObject == null)
+            {
+                throw new InvalidOperationException("Target object is not set.");
+            }
+
+        }
+
+        GameObject CheckRoot(GameObject targetObject)
+        {
+            if (Settings.RootObject) return Settings.RootObject;
+            //親オブジェクトが存在するか確認
+            Transform parent = targetObject.transform.parent;
+            if (parent == null)
+            {
+                throw new InvalidOperationException("Select the object with SkinnedMeshRenderer directly under the avatar/costume");
+            }
+            GameObject root = parent.gameObject;
+            return root;
+        }
+
+        void CheckHips(GameObject root)
+        {
+            GameObject hips = null;
+            foreach (Transform child in root.transform)
+            {
+                foreach (Transform grandChild in child.transform)
+                {
+                    if (grandChild.name.ToLower().StartsWith("hip"))
+                    {
+                        hips = grandChild.gameObject;
+                        break;
+                    }
+                }
+            }
+            if (hips == null)
+            {
+                //throw new InvalidOperationException("Hips not found under the root object.");
+                Debug.LogWarning("Hips could not be found. Merge Armature/Setup Outfit may not work properly.");
+            }
+        }
+
+        void CheckSkin(GameObject targetObject)
+        {
+            //SkinnedMeshRendererがついたオブジェクトか確認
+            SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
+            if (skinnedMeshRenderer == null)
+            {
+                
+                throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
+            }
+        }
+    }
+
+    private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
+    {
+        string variantPath = GenerateVariantPath();
+
+        GameObject new_root = PrefabUtility.SaveAsPrefabAsset(root_object, variantPath);        
+        if (new_root == null)
+        {
+            throw new InvalidOperationException("Prefab creation failed.");
+        }
+        return (new_root, variantPath);
+
+
+        string GenerateVariantPath()
+        {
+            string base_path = $"Assets/ModuleCreator";
+            if (!AssetDatabase.IsValidFolder(base_path))
+            {
+                AssetDatabase.CreateFolder("Assets", "ModuleCreator");
+                AssetDatabase.Refresh();
+            }
+            
+            string folderPath = $"{base_path}/{root_object.name}";
+            if (!AssetDatabase.IsValidFolder(folderPath))
+            {
+                AssetDatabase.CreateFolder(base_path, root_object.name);
+                AssetDatabase.Refresh();
+            }
+
+            string fileName = $"{source_name}_MA";
+            string fileExtension = "prefab";
+            
+            return AssetDatabase.GenerateUniqueAssetPath(folderPath + "/" + fileName + "." + fileExtension);
+        }
+    }
+
+    private void CleanUpHierarchy(GameObject new_root, int skin_index, ModuleCreatorSettings settings)
+    {   
+        HashSet<GameObject> objectsToSave = new HashSet<GameObject>();
+
+        //複製先のSkinnedMeshRendererがついたオブジェクトを取得
+        Transform[] AllChildren = GetAllChildren(new_root);
+        GameObject skin = AllChildren[skin_index].gameObject;
+        objectsToSave.Add(skin);
+
+        HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
+        objectsToSave.UnionWith(weightedBones);
+
+        if (settings.IncludePhysBone == true) 
+        {
+            HashSet<GameObject> PhysBoneObjects = FindPhysBoneObjects(new_root, weightedBones);
+            objectsToSave.UnionWith(PhysBoneObjects);
+        }
+
+        CheckAndDeleteRecursive(new_root, objectsToSave);
     }
 
     private HashSet<GameObject> CheckBoneWeight(GameObject targetObject)
@@ -169,56 +225,6 @@ public class ModuleCreator
         }
 
         return weightedBones;
-    }
-
-    private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
-    {
-        string base_path = $"Assets/ModuleCreator";
-        if (!AssetDatabase.IsValidFolder(base_path))
-        {
-            AssetDatabase.CreateFolder("Assets", "ModuleCreator");
-            AssetDatabase.Refresh();
-        }
-        
-        string folderPath = $"{base_path}/{root_object.name}";
-        if (!AssetDatabase.IsValidFolder(folderPath))
-        {
-            AssetDatabase.CreateFolder(base_path, root_object.name);
-            AssetDatabase.Refresh();
-        }
-
-        string fileName = $"{source_name}_MA";
-        string fileExtension = "prefab";
-        
-        string variantPath = AssetDatabase.GenerateUniqueAssetPath(folderPath + "/" + fileName + "." + fileExtension);
-        
-        GameObject new_root = PrefabUtility.SaveAsPrefabAsset(root_object, variantPath);        
-        if (new_root == null)
-        {
-            throw new InvalidOperationException("Prefab creation failed.");
-        }
-        return (new_root, variantPath);
-    }
-
-    private void CleanUpHierarchy(GameObject new_root, int skin_index, ModuleCreatorSettings settings)
-    {   
-        HashSet<GameObject> objectsToSave = new HashSet<GameObject>();
-
-        //複製先のSkinnedMeshRendererがついたオブジェクトを取得
-        Transform[] AllChildren = GetAllChildren(new_root);
-        GameObject skin = AllChildren[skin_index].gameObject;
-        objectsToSave.Add(skin);
-
-        HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
-        objectsToSave.UnionWith(weightedBones);
-
-        if (settings.IncludePhysBone == true) 
-        {
-            HashSet<GameObject> PhysBoneObjects = FindPhysBoneObjects(new_root, weightedBones);
-            objectsToSave.UnionWith(PhysBoneObjects);
-        }
-
-        CheckAndDeleteRecursive(new_root, objectsToSave);
     }
 
     private void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> objectsToSave)
@@ -287,31 +293,6 @@ public class ModuleCreator
         }
     }
 
-    private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result, HashSet<Transform> ignoreTransforms)
-    {   
-        if (Settings.IncludeIgnoreTransforms == false && ignoreTransforms.Contains(transform)) return;
-        result.Add(transform.gameObject);   
-        if (transform.childCount == 1)
-        {
-            Transform child = transform.GetChild(0);
-            AddSingleChildRecursive(child, result, ignoreTransforms);
-        }
-    }
-
-    private HashSet<Transform> GetIgnoreTransforms(VRCPhysBone physBone)
-    {
-        HashSet<Transform> AffectedIgnoreTransforms = new HashSet<Transform>();
-
-        foreach (Transform ignoreTransform in physBone.ignoreTransforms)
-        {   
-            if (ignoreTransform == null) continue;
-            Transform[] AffectedIgnoreTransform = GetAllChildren(ignoreTransform.gameObject);
-            AffectedIgnoreTransforms.UnionWith(AffectedIgnoreTransform);
-        }
-
-        return AffectedIgnoreTransforms;
-    }
-
     private HashSet<GameObject> FindPhysBoneObjects(GameObject root, HashSet<GameObject> weightedBones)
     {
         var physBoneObjects = new HashSet<GameObject>();
@@ -348,6 +329,32 @@ public class ModuleCreator
         if (Settings.IncludePhysBoneColider == true) RemoveUnusedPhysBoneColliders(root, physBoneObjects);
         return physBoneObjects;
     }
+
+    private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result, HashSet<Transform> ignoreTransforms)
+    {   
+        if (Settings.IncludeIgnoreTransforms == false && ignoreTransforms.Contains(transform)) return;
+        result.Add(transform.gameObject);   
+        if (transform.childCount == 1)
+        {
+            Transform child = transform.GetChild(0);
+            AddSingleChildRecursive(child, result, ignoreTransforms);
+        }
+    }
+
+    private HashSet<Transform> GetIgnoreTransforms(VRCPhysBone physBone)
+    {
+        HashSet<Transform> AffectedIgnoreTransforms = new HashSet<Transform>();
+
+        foreach (Transform ignoreTransform in physBone.ignoreTransforms)
+        {   
+            if (ignoreTransform == null) continue;
+            Transform[] AffectedIgnoreTransform = GetAllChildren(ignoreTransform.gameObject);
+            AffectedIgnoreTransforms.UnionWith(AffectedIgnoreTransform);
+        }
+
+        return AffectedIgnoreTransforms;
+    }
+
 
     private HashSet<GameObject> GetWeightedPhysBoneObjects(VRCPhysBone physBone, HashSet<GameObject> weightedBones)
     {
