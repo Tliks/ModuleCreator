@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.4.0-beta.2] - 2024-05-06
+### Added
 - Added tooltip to advanced settings
 - Added option to output additional PhysBones Affected Transforms for exact movement
 - Added option to include IgnoreTransforms
@@ -10,17 +23,11 @@
 - Changed to assume IgnoreTransforms
 - Use Hips search instead of armature search
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - Settings was shared.
 - Error occurred when a null collider was associated with physBone.
 - Error occurred when a null ignoreTransform was associated with physBone.
 - Error when a bone associated with a mesh cannot be found was not appropriate.
-
-### Security
 
 ## [0.4.0-beta.1] - 2024-04-28
 ### Added
