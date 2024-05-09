@@ -310,7 +310,7 @@ public class ModuleCreator
                 //MAの仕様に反し衣装側のPBを強制
                 if (Settings.RenameRootTransform == true)
                 {
-                    physBone.rootTransform.name = $"{physBone.rootTransform.name}.1";
+                    physBone.rootTransform.name += ".1";
                 }
 
                 physBoneObjects.Add(physBone.gameObject);
@@ -400,12 +400,12 @@ public class ModuleCreator
                 //MAの仕様に反し衣装側のPBCを強制
                 if (Settings.RenameRootTransform == true)
                 {
-                    collider.rootTransform.name = $"{collider.rootTransform.name}.1";
+                    collider.rootTransform.name += ".1";
                     //Debug.Log(collider.rootTransform.name);
                 }
             }
 
-            // 不要ななPhysBoneColliderはここで削除
+            // 不要なPhysBoneColliderはここで削除
             else
             {
                 UnityEngine.Object.DestroyImmediate(collider, true);
