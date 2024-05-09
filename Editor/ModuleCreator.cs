@@ -326,7 +326,9 @@ public class ModuleCreator
             else UnityEngine.Object.DestroyImmediate(physBone, true);
         }
 
-        if (Settings.IncludePhysBoneColider == true) RemoveUnusedPhysBoneColliders(root, physBoneObjects);
+        // PhysBoneColiderに対する処理
+        ProcessPhysBoneColliders(root, physBoneObjects);
+
         return physBoneObjects;
     }
 
@@ -382,10 +384,11 @@ public class ModuleCreator
         return WeightedPhysBoneObjects;
     }
 
-    private void RemoveUnusedPhysBoneColliders(GameObject root, HashSet<GameObject> physBoneObjects)
+    private void ProcessPhysBoneColliders(GameObject root, HashSet<GameObject> physBoneObjects)
     {
         foreach (VRCPhysBoneCollider collider in root.GetComponentsInChildren<VRCPhysBoneCollider>(true))
-        {
+        {   
+            // 必要なPhysBoneColliderに対する処理
             if (physBoneObjects.Contains(collider.gameObject))
             {
                 //MAの仕様に反し衣装側のPBCを強制
@@ -395,6 +398,8 @@ public class ModuleCreator
                     //Debug.Log(collider.rootTransform.name);
                 }
             }
+
+            // 不要ななPhysBoneColliderはここで削除
             else
             {
                 UnityEngine.Object.DestroyImmediate(collider, true);

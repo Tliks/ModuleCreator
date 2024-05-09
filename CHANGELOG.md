@@ -10,6 +10,7 @@
 ### Removed
 
 ### Fixed
+- PhysBoneCollider is not removed in some cases
 
 ### Security
 
