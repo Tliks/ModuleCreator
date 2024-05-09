@@ -1,8 +1,8 @@
-using UnityEditor;
-using UnityEngine;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 
 public class ModuleCreatorSettings
@@ -18,7 +18,7 @@ public class ModuleCreatorSettings
 
 public class ModuleCreator
 {
-    private ModuleCreatorSettings Settings;
+    private readonly ModuleCreatorSettings Settings;
 
     public ModuleCreator(ModuleCreatorSettings settings)
     {
@@ -33,7 +33,7 @@ public class ModuleCreator
 
             (GameObject new_root, string variantPath) = CopyRootObject(root, sourceObject.name);
 
-            CleanUpHierarchy(new_root, skin_index, Settings);
+            CleanUpHierarchy(new_root, skin_index);
 
             PrefabUtility.InstantiatePrefab(new_root);
             
@@ -67,7 +67,6 @@ public class ModuleCreator
             {
                 throw new InvalidOperationException("Target object is not set.");
             }
-
         }
 
         GameObject CheckRoot(GameObject targetObject)
@@ -77,7 +76,7 @@ public class ModuleCreator
             Transform parent = targetObject.transform.parent;
             if (parent == null)
             {
-                throw new InvalidOperationException("Select the object with SkinnedMeshRenderer directly under the avatar/costume");
+                throw new InvalidOperationException("Please select the object with SkinnedMeshRenderer directly under the avatar/costume");
             }
             GameObject root = parent.gameObject;
             return root;
@@ -106,7 +105,6 @@ public class ModuleCreator
 
         void CheckSkin(GameObject targetObject)
         {
-            //SkinnedMeshRendererがついたオブジェクトか確認
             SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
             if (skinnedMeshRenderer == null)
             {
@@ -118,7 +116,7 @@ public class ModuleCreator
 
     private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
     {
-        string variantPath = GenerateVariantPath();
+        string variantPath = GenerateVariantPath(root_object, source_name);
 
         GameObject new_root = PrefabUtility.SaveAsPrefabAsset(root_object, variantPath);        
         if (new_root == null)
@@ -128,7 +126,7 @@ public class ModuleCreator
         return (new_root, variantPath);
 
 
-        string GenerateVariantPath()
+        string GenerateVariantPath(GameObject root_object, string source_name)
         {
             string base_path = $"Assets/ModuleCreator";
             if (!AssetDatabase.IsValidFolder(base_path))
@@ -151,19 +149,21 @@ public class ModuleCreator
         }
     }
 
-    private void CleanUpHierarchy(GameObject new_root, int skin_index, ModuleCreatorSettings settings)
+    private void CleanUpHierarchy(GameObject new_root, int skin_index)
     {   
         HashSet<GameObject> objectsToSave = new HashSet<GameObject>();
 
-        //複製先のSkinnedMeshRendererがついたオブジェクトを取得
+        // 複製先のSkinnedMeshRendererがついたオブジェクトを追加
         Transform[] AllChildren = GetAllChildren(new_root);
         GameObject skin = AllChildren[skin_index].gameObject;
         objectsToSave.Add(skin);
 
+        // ウェイトをつけているオブジェクトを追加
         HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
         objectsToSave.UnionWith(weightedBones);
 
-        if (settings.IncludePhysBone == true) 
+        // PhysBoneに関連するオブジェクトを追加
+        if (Settings.IncludePhysBone == true) 
         {
             HashSet<GameObject> PhysBoneObjects = FindPhysBoneObjects(new_root, weightedBones);
             objectsToSave.UnionWith(PhysBoneObjects);
@@ -221,6 +221,7 @@ public class ModuleCreator
 
         if (hasNullBone)
         {
+            //Debug.LogWarning()
             throw new InvalidOperationException("Some bones weighting mesh could not be found");
         }
 
@@ -272,7 +273,7 @@ public class ModuleCreator
 
     private void RemoveComponents(GameObject targetGameObject)
     {
-        // Componentを列挙し、Transform、SkinnedMeshRenderer、(VRCPhysBone、VRCPhysBoneCollider)以外を削除
+        // 削除対象のomponentを列挙
         List<Component> componentsToRemove;
         if (Settings.IncludePhysBone == true)
         {
@@ -297,10 +298,13 @@ public class ModuleCreator
     {
         var physBoneObjects = new HashSet<GameObject>();
 
+        // PhysBoneに対する処理
         foreach (VRCPhysBone physBone in root.GetComponentsInChildren<VRCPhysBone>(true))
         {
             if (physBone.rootTransform == null) physBone.rootTransform = physBone.transform;
             var weightedPBObjects = GetWeightedPhysBoneObjects(physBone, weightedBones);
+
+            // 有効なPhysBoneだった場合
             if (weightedPBObjects.Count > 0)
             {
                 //MAの仕様に反し衣装側のPBを強制
@@ -323,6 +327,8 @@ public class ModuleCreator
                     }
                 }
             }
+            
+            // 無効なPhysBoneはここで削除
             else UnityEngine.Object.DestroyImmediate(physBone, true);
         }
 

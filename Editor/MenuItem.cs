@@ -50,24 +50,22 @@ public class ModuleCreatorWindow : EditorWindow
         showAdvancedOptions = EditorGUILayout.Foldout(showAdvancedOptions, "Advanced Options");
         if (showAdvancedOptions)
         {
-            //if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
             GUI.enabled = Settings.IncludePhysBone;
+
+            //if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
             GUIContent content_at = new GUIContent("Additional Transforms", "Output Additional PhysBones Affected Transforms for exact PhysBone movement");
             Settings.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, Settings.RemainAllPBTransforms);
-            GUI.enabled = true;
 
             //if (Settings.IncludePhysBone == false) Settings.IncludeIgnoreTransforms = false;
-            GUI.enabled = Settings.IncludePhysBone;
             GUIContent content_ii = new GUIContent("Include IgnoreTransforms", "Output PhysBone's IgnoreTransforms");
             Settings.IncludeIgnoreTransforms = EditorGUILayout.Toggle(content_ii, Settings.IncludeIgnoreTransforms);
-            GUI.enabled = true;
 
             //if (Settings.IncludePhysBone == false) Settings.RenameRootTransform = false;
-            GUI.enabled = Settings.IncludePhysBone;
             GUIContent content_rr = new GUIContent(
                 "Rename RootTransform", 
                 "Not Recommended: Due to the specifications of modular avatar, costume-side physbones may be deleted in some cases, so renaming physbone RootTransform will ensure that the costume-side physbones are integrated. This may cause duplication.");
-                Settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, Settings.RenameRootTransform);
+            Settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, Settings.RenameRootTransform);
+
             GUI.enabled = true;
             
             GUIContent content_sr = new GUIContent("Specify Root Object", "The default root object is the parent object of the specified skinned mesh rendrer object");
