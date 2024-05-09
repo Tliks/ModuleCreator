@@ -10,37 +10,29 @@
 ### Removed
 
 ### Fixed
-- PhysBoneCollider is not removed in some cases
 
 ### Security
 
-## [0.4.0-beta.2] - 2024-05-06
+## [0.4.0] - 20204-05-09
 ### Added
-- Added tooltip to advanced settings
-- Added option to output additional PhysBones Affected Transforms for exact movement
-- Added option to include IgnoreTransforms
+- window to Window/Module Creator
+- option to disable PhysBone/PhysBoneColider output
+- option to rename PhysBone RootTransform
+- option to specify Root Object
+- option to output additional PhysBones Affected Transforms for exact movement
+- option to include IgnoreTransforms
+- tooltip to advanced options
 
 ### Changed
 - Changed to assume IgnoreTransforms
 - Use Hips search instead of armature search
-
-### Fixed
-- Settings was shared.
-- Error occurred when a null collider was associated with physBone.
-- Error occurred when a null ignoreTransform was associated with physBone.
-- Error when a bone associated with a mesh cannot be found was not appropriate.
-
-## [0.4.0-beta.1] - 2024-04-28
-### Added
-- Add window to Window/Module Creator
-- Add option to disable PhysBone/PhysBoneColider output
-- Add option to rename PhysBone RootTransform
-- Add option to specify Root Object
-
-### Changed
+- Log messages are now unified in English
 - All unnecessary components will be removed
 
 ### Fixed
+- Error occurred when a null collider was associated with physBone.
+- Error occurred when a null ignoreTransform was associated with physBone.
+- Error when a bone associated with a mesh cannot be found was not appropriate.
 - Unnecessary PhysBone is not removed
 - Some objects are not active
 
