@@ -5,4 +5,4 @@ Module Creator
 
 アバターや衣装等からメッシュ単位でPrefabを生成します
 
-[VCC](https://tliks.github.io/vpm-repos/)から追加後オブジェクトのメニューから実行できます
+[VCC](https://tliks.github.io/vpm-repos/)から追加後オブジェクトのメニューもしくはウィンドウから実行できます
