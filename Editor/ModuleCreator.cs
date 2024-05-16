@@ -35,6 +35,8 @@ public class ModuleCreator
 
             CleanUpHierarchy(new_root, skin_index);
 
+            PrefabUtility.SavePrefabAsset(new_root);
+
             PrefabUtility.InstantiatePrefab(new_root);
             
             Debug.Log("Saved to " + variantPath);
