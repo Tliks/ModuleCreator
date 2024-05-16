@@ -40,12 +40,16 @@ public class ModuleCreator
             PrefabUtility.InstantiatePrefab(new_root);
             
             Debug.Log("Saved to " + variantPath);
+        }
 
+        catch (InvalidOperationException ex)
+        {
+            Debug.LogError("[Module Creator] " + ex.Message);
         }
         catch (Exception ex)
         {
-            Debug.LogError(ex);
             Debug.LogError(ex.StackTrace);
+            Debug.LogError(ex);
         }
     }
 
@@ -53,8 +57,8 @@ public class ModuleCreator
     {
         Checktarget(targetObject);
         GameObject root = CheckRoot(targetObject);
-        CheckHips(root);
         CheckSkin(targetObject);
+        CheckHips(root);
 
         //skin_index: 複製先でSkinnedMeshRendererがついたオブジェクトを追跡するためのインデックス
         Transform[] AllChildren = GetAllChildren(root);
@@ -84,6 +88,16 @@ public class ModuleCreator
             return root;
         }
 
+        void CheckSkin(GameObject targetObject)
+        {
+            SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
+            if (skinnedMeshRenderer == null)
+            {
+                
+                throw new InvalidOperationException($"'{targetObject.name}' does not have a SkinnedMeshRenderer.");
+            }
+        }
+
         void CheckHips(GameObject root)
         {
             GameObject hips = null;
@@ -105,15 +119,6 @@ public class ModuleCreator
             }
         }
 
-        void CheckSkin(GameObject targetObject)
-        {
-            SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
-            if (skinnedMeshRenderer == null)
-            {
-                
-                throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
-            }
-        }
     }
 
     private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
