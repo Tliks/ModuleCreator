@@ -4,7 +4,7 @@
 ### Added
 
 ### Changed
-
+- Change log message to appropriate format
 ### Deprecated
 
 ### Removed
@@ -12,6 +12,7 @@
 ### Fixed
 - rootbone of skinned mesh is not held
 - anchor of skinned mesh is not held
+- Prefab Asset is not updated
 
 ### Security
 
