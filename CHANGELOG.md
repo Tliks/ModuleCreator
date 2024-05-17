@@ -4,16 +4,19 @@
 ### Added
 
 ### Changed
-
+- Change log message to appropriate format
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+- rootbone of skinned mesh is not held
+- anchor of skinned mesh is not held
+- Prefab Asset is not updated
 
 ### Security
 
-## [0.4.0] - 20204-05-09
+## [0.4.0] - 2024-05-09
 ### Added
 - window to Window/Module Creator
 - option to disable PhysBone/PhysBoneColider output

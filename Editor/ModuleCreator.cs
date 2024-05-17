@@ -35,15 +35,21 @@ public class ModuleCreator
 
             CleanUpHierarchy(new_root, skin_index);
 
+            PrefabUtility.SavePrefabAsset(new_root);
+
             PrefabUtility.InstantiatePrefab(new_root);
             
-            Debug.Log("Saved to " + variantPath);
+            Debug.Log("Saved prefab to " + variantPath);
+        }
 
+        catch (InvalidOperationException ex)
+        {
+            Debug.LogError("[Module Creator] " + ex.Message);
         }
         catch (Exception ex)
         {
-            Debug.LogError(ex);
             Debug.LogError(ex.StackTrace);
+            Debug.LogError(ex);
         }
     }
 
@@ -51,8 +57,8 @@ public class ModuleCreator
     {
         Checktarget(targetObject);
         GameObject root = CheckRoot(targetObject);
-        CheckHips(root);
         CheckSkin(targetObject);
+        CheckHips(root);
 
         //skin_index: 複製先でSkinnedMeshRendererがついたオブジェクトを追跡するためのインデックス
         Transform[] AllChildren = GetAllChildren(root);
@@ -82,6 +88,16 @@ public class ModuleCreator
             return root;
         }
 
+        void CheckSkin(GameObject targetObject)
+        {
+            SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
+            if (skinnedMeshRenderer == null)
+            {
+                
+                throw new InvalidOperationException($"'{targetObject.name}' does not have a SkinnedMeshRenderer.");
+            }
+        }
+
         void CheckHips(GameObject root)
         {
             GameObject hips = null;
@@ -103,15 +119,6 @@ public class ModuleCreator
             }
         }
 
-        void CheckSkin(GameObject targetObject)
-        {
-            SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
-            if (skinnedMeshRenderer == null)
-            {
-                
-                throw new InvalidOperationException($"{targetObject.name} does not have a SkinnedMeshRenderer.");
-            }
-        }
     }
 
     private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
@@ -158,8 +165,17 @@ public class ModuleCreator
         GameObject skin = AllChildren[skin_index].gameObject;
         objectsToSave.Add(skin);
 
+        SkinnedMeshRenderer skinnedMeshRenderer = skin.GetComponent<SkinnedMeshRenderer>();
+
+        // SkinnedMeshRendererのrootBoneとanchor overrideに設定されているオブジェクトを追加
+        Transform rootBone = skinnedMeshRenderer.rootBone;
+        Transform anchor = skinnedMeshRenderer.probeAnchor;
+        if (rootBone) objectsToSave.Add(rootBone.gameObject);
+        if (anchor) objectsToSave.Add(anchor.gameObject);
+
         // ウェイトをつけているオブジェクトを追加
-        HashSet<GameObject> weightedBones = CheckBoneWeight(skin);
+        HashSet<GameObject> weightedBones = GetWeightedBones(skinnedMeshRenderer);
+        Debug.Log($"Bones weighting {skin.name}: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
         objectsToSave.UnionWith(weightedBones);
 
         // PhysBoneに関連するオブジェクトを追加
@@ -170,16 +186,6 @@ public class ModuleCreator
         }
 
         CheckAndDeleteRecursive(new_root, objectsToSave);
-    }
-
-    private HashSet<GameObject> CheckBoneWeight(GameObject targetObject)
-    {   
-        SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
-        // 指定のメッシュにウェイトを付けてるボーンの一覧を取得
-        HashSet<GameObject> weightedBones = GetWeightedBones(skinnedMeshRenderer);
-
-        Debug.Log($"Bones weighting {targetObject.name}: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
-        return weightedBones;
     }
 
     private HashSet<GameObject> GetWeightedBones(SkinnedMeshRenderer skinnedMeshRenderer)
