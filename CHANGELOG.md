@@ -4,17 +4,23 @@
 ### Added
 
 ### Changed
-- Change log message to appropriate format
+
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+### Security
+
+## [0.4.1] - 2024-05-18
+### Changed
+- Change log message to appropriate format
+
+### Fixed
 - rootbone of skinned mesh is not held
 - anchor of skinned mesh is not held
 - Prefab Asset is not updated
-
-### Security
 
 ## [0.4.0] - 2024-05-09
 ### Added
