@@ -193,6 +193,7 @@ namespace com.aoyon.moduleCreator
         private HashSet<GameObject> GetWeightedBones(SkinnedMeshRenderer skinnedMeshRenderer)
         {
             BoneWeight[] boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
+            Transform[] bones = skinnedMeshRenderer.bones;
             HashSet<GameObject> weightedBones = new HashSet<GameObject>();
             bool hasNullBone = false;
 
@@ -200,28 +201,28 @@ namespace com.aoyon.moduleCreator
             {
                 if (boneWeight.weight0 > 0)
                 {
-                    Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex0];
+                    Transform boneTransform = bones[boneWeight.boneIndex0];
                     if (boneTransform == null) hasNullBone = true;
                     else weightedBones.Add(boneTransform.gameObject);
                 }
 
                 if (boneWeight.weight1 > 0)
                 {
-                    Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex1];
+                    Transform boneTransform = bones[boneWeight.boneIndex1];
                     if (boneTransform == null) hasNullBone = true;
                     else weightedBones.Add(boneTransform.gameObject);
                 }
 
                 if (boneWeight.weight2 > 0)
                 {
-                    Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex2];
+                    Transform boneTransform = bones[boneWeight.boneIndex2];
                     if (boneTransform == null) hasNullBone = true;
                     else weightedBones.Add(boneTransform.gameObject);
                 }
 
                 if (boneWeight.weight3 > 0)
                 {
-                    Transform boneTransform = skinnedMeshRenderer.bones[boneWeight.boneIndex3];
+                    Transform boneTransform = bones[boneWeight.boneIndex3];
                     if (boneTransform == null) hasNullBone = true;
                     else weightedBones.Add(boneTransform.gameObject);
                 }
