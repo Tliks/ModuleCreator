@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Dynamics.PhysBone.Components;
+using UnityEngine.SceneManagement;
 
 namespace com.aoyon.moduleCreator
 {
@@ -39,7 +40,9 @@ namespace com.aoyon.moduleCreator
 
                 PrefabUtility.SavePrefabAsset(new_root);
 
-                PrefabUtility.InstantiatePrefab(new_root);
+                GameObject instance = PrefabUtility.InstantiatePrefab(new_root) as GameObject;
+
+                SceneManager.MoveGameObjectToScene(instance, sourceObject.scene);
                 
                 Debug.Log("Saved prefab to " + variantPath);
             }
