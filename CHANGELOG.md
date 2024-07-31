@@ -13,6 +13,13 @@
 
 ### Security
 
+## [0.4.3] - 2024-07-31
+### Deprecated
+- The ability for prefab instances to be selected during generation has been deprecated due to an error
+
+### Fixed
+- ArgumentOutOfRangeException
+
 ## [0.4.2] - 2024-07-31
 ### Changed
 - add changelogurl to package.json
