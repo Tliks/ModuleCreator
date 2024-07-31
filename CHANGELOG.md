@@ -15,8 +15,8 @@
 
 ## [0.4.2] - 2024-07-31
 ### Changed
-- add pingobject to prefab instance
 - add changelogurl to package.json
+- prefab instance is now selected when generated
 
 ### Fixed
 - ArgumentException: Can't save part of a Prefab instance as a Prefab
