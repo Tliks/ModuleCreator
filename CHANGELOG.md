@@ -17,6 +17,7 @@
 ### Changed
 - add changelogurl to package.json
 - prefab instance is now selected when generated
+- The operation is now performed only on object with skinnedmeshrender
 
 ### Fixed
 - ArgumentException: Can't save part of a Prefab instance as a Prefab

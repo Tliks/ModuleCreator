@@ -11,6 +11,13 @@ namespace com.aoyon.moduleCreator
 
         private bool showAdvancedOptions = false;
 
+        [MenuItem("GameObject/Module Creator/Create Module", true, MENU_PRIORITY)]
+        private static bool ValidateCreateModule()
+        {
+            GameObject sourceObject = Selection.activeGameObject;
+            return sourceObject != null && sourceObject.GetComponent<SkinnedMeshRenderer>() != null;
+        }
+
         [MenuItem("GameObject/Module Creator/Create Module", false, MENU_PRIORITY)]
         private static void CreateModule()
         {
