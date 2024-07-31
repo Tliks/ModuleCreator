@@ -98,7 +98,16 @@ namespace com.aoyon.moduleCreator
                 {
                     throw new InvalidOperationException("Please select the object with SkinnedMeshRenderer directly under the avatar/costume");
                 }
-                GameObject root = parent.gameObject;
+
+                GameObject root;
+                if (PrefabUtility.IsPartOfPrefabInstance(targetObject))
+                {
+                    root = PrefabUtility.GetNearestPrefabInstanceRoot(targetObject);
+                }
+                else
+                {
+                    root = parent.gameObject;
+                }
                 return root;
             }
 
@@ -134,8 +143,7 @@ namespace com.aoyon.moduleCreator
             }
 
         }
-
-        private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
+            private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
         {
             string variantPath = GenerateVariantPath(root_object, source_name);
 
