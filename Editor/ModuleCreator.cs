@@ -43,6 +43,7 @@ namespace com.aoyon.moduleCreator
                 GameObject instance = PrefabUtility.InstantiatePrefab(new_root) as GameObject;
 
                 SceneManager.MoveGameObjectToScene(instance, sourceObject.scene);
+                EditorGUIUtility.PingObject(instance);
                 
                 Debug.Log("Saved prefab to " + variantPath);
             }
