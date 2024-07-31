@@ -12,9 +12,9 @@ namespace com.aoyon.moduleCreator
         private bool showAdvancedOptions = false;
 
         [MenuItem("GameObject/Module Creator/Create Module", false, MENU_PRIORITY)]
-        private static void CreateModule(MenuCommand menuCommand)
+        private static void CreateModule()
         {
-            GameObject sourceObject = menuCommand.context as GameObject;
+            GameObject sourceObject = Selection.activeGameObject;
 
             ModuleCreatorSettings settings = new ModuleCreatorSettings();
             ModuleCreator moduleCreator = new ModuleCreator(settings);

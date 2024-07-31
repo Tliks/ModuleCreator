@@ -44,7 +44,8 @@ namespace com.aoyon.moduleCreator
 
                 SceneManager.MoveGameObjectToScene(instance, sourceObject.scene);
                 EditorGUIUtility.PingObject(instance);
-                
+                Selection.objects = Selection.gameObjects.Append(instance).ToArray();
+
                 Debug.Log("Saved prefab to " + variantPath);
             }
 
