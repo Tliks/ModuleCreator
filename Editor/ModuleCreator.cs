@@ -61,6 +61,7 @@ namespace com.aoyon.moduleCreator
         private (GameObject, int) CheckObjects(GameObject targetObject)
         {
             Checktarget(targetObject);
+            CheckPrefabAsset(targetObject);
             GameObject root = CheckRoot(targetObject);
             CheckSkin(targetObject);
             CheckHips(root);
@@ -77,6 +78,14 @@ namespace com.aoyon.moduleCreator
                 if (targetObject == null)
                 {
                     throw new InvalidOperationException("Target object is not set.");
+                }
+            }
+
+            void CheckPrefabAsset(GameObject targetObject)
+            {
+                if (PrefabUtility.IsPartOfPrefabAsset(targetObject))
+                {
+                    throw new InvalidOperationException("Please run it on the prefab instance in the hierarchy, not on the prefabasset.");
                 }
             }
 
