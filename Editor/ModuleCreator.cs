@@ -1,448 +1,212 @@
-using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using VRC.SDK3.Dynamics.PhysBone.Components;
-using UnityEngine.SceneManagement;
+using com.aoyon.triangleselector;
+using com.aoyon.triangleselector.utils;
 
-namespace com.aoyon.moduleCreator
-{
-    public class ModuleCreatorSettings
+
+namespace com.aoyon.modulecreator
+{   
+
+    public class ModuleCreator : EditorWindow
     {
-        public bool IncludePhysBone = true;
-        public bool IncludePhysBoneColider = true;
+        private List<SkinnedMeshRenderer> _skinnedMeshRenderers;
 
-        public bool RenameRootTransform = false;
-        public bool RemainAllPBTransforms = false;
-        public bool IncludeIgnoreTransforms = false;
-        public GameObject RootObject = null;
-    }
+        private List<List<int>> _targetselections = new();
+        private RenderSelector[] _renderSelectors;
 
-    public class ModuleCreator
-    {
-        private readonly ModuleCreatorSettings Settings;
+        private Vector2 scrollPosition;
 
-        public ModuleCreator(ModuleCreatorSettings settings)
+
+        private static ModuleCreatorOptions _options;
+
+        private static bool _showAdvancedOptions = false;
+
+
+        public static void ShowWindow(SkinnedMeshRenderer[] skinnedMeshRenderers)
         {
-            Settings = settings;
+            ModuleCreator window = GetWindow<ModuleCreator>();
+            window.Initialize(skinnedMeshRenderers);
+            window.Show();
+        }
+
+        private void Initialize(SkinnedMeshRenderer[] skinnedMeshRenderers)
+        {
+            _skinnedMeshRenderers = skinnedMeshRenderers.ToList();
+            _options = new();
+
+            int rendererCount = _skinnedMeshRenderers.Count;
+            _renderSelectors = new RenderSelector[rendererCount];
+            _targetselections = new List<List<int>>(rendererCount);
+            for (int i = 0; i < rendererCount; i++)
+            {
+                var renderSelector = CreateInstance<RenderSelector>();
+                var targetSelection = new List<int>();
+                renderSelector.Initialize(_skinnedMeshRenderers[i], targetSelection, "(100%)%");
+                renderSelector.RegisterApplyCallback(newSelection => _targetselections[i] = newSelection);
+                _renderSelectors[i] = renderSelector;
+                _targetselections.Add(targetSelection);
+            }
+        }
+
+        void OnDestroy()
+        {
+            foreach(var renderSelector in _renderSelectors)
+            {
+                renderSelector.Dispose();
+            }
         }
         
-        public void CheckAndCopyBones(GameObject sourceObject)
-        {   
-            try
+        void OnGUI()
+        {
+            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+
+            // 冒頭
+            LocalizationEditor.RenderLocalize();
+            EditorGUILayout.HelpBox(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.description"), MessageType.Info);
+            
+            // 各Rendererに対するUI
+            EditorGUILayout.Space();
+            for (int i = 0; i < _skinnedMeshRenderers.Count(); i++)
             {
-                (GameObject root, int skin_index) = CheckObjects(sourceObject);
+                using (new GUILayout.HorizontalScope())
+                {
+                    float width3 = 80f;
+                    float margin = 14f;
+                    float remainingWidth = position.width - width3 - margin;
 
-                (GameObject new_root, string variantPath) = CopyRootObject(root, sourceObject.name);
+                    float width1 = remainingWidth * 0.65f;
+                    float width2 = remainingWidth * 0.35f;
 
-                CleanUpHierarchy(new_root, skin_index);
+                    _skinnedMeshRenderers[i] = (SkinnedMeshRenderer)EditorGUILayout.ObjectField(_skinnedMeshRenderers[i], typeof(SkinnedMeshRenderer), true, GUILayout.Width(width1));
 
-                PrefabUtility.SavePrefabAsset(new_root);
+                    _renderSelectors[i].RenderTriangleSelection(new GUILayoutOption[]{ GUILayout.Width(width2)});
 
-                GameObject instance = PrefabUtility.InstantiatePrefab(new_root) as GameObject;
-
-                SceneManager.MoveGameObjectToScene(instance, sourceObject.scene);
-                EditorGUIUtility.PingObject(instance);
-                //election.objects = Selection.gameObjects.Append(instance).ToArray();
-
-                Debug.Log("Saved prefab to " + variantPath);
+                    string[] labels = new string[]{ "Edit", "Edit", "Close" };
+                    GUILayoutOption[] options = new GUILayoutOption[]{ GUILayout.Width(80f), GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false)};
+                    _renderSelectors[i].RenderEditSelection(labels, options);
+                }
             }
 
-            catch (InvalidOperationException ex)
+
+            // オプション
+            EditorGUILayout.Space();
+        
+            _options.IncludePhysBone = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.PhysBoneToggle"), _options.IncludePhysBone);
+
+            GUI.enabled = _options.IncludePhysBone;
+            _options.IncludePhysBoneColider = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.PhysBoneColiderToggle"), _options.IncludePhysBoneColider);
+            GUI.enabled = true;
+
+            EditorGUILayout.Space();
+
+            _options.MergePrefab = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.MergePrefab"), _options.MergePrefab);
+            _options.Outputunselected = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.OutputUnselcted"), _options.Outputunselected);
+
+
+            // 実行ボタン
+            EditorGUILayout.Space();
+            GUI.enabled = _skinnedMeshRenderers != null & _skinnedMeshRenderers.Count() > 0;
+            if (GUILayout.Button(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.CreateModuleButton")))
             {
-                Debug.LogError("[Module Creator] " + ex.Message);
+                CreateModule();
+                Close();
+                GUIUtility.ExitGUI(); 
             }
-            catch (Exception ex)
-            {
-                Debug.LogError(ex.StackTrace);
-                Debug.LogError(ex);
+            GUI.enabled = true;
+
+
+            // 高度なオプション
+            EditorGUILayout.Space();
+            _showAdvancedOptions = EditorGUILayout.Foldout(_showAdvancedOptions, LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.advancedoptions"));
+            if (_showAdvancedOptions)
+            { 
+                GUI.enabled = _options.IncludePhysBone;
+
+                GUIContent content_at = new GUIContent(
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.AdditionalTransformsToggle"),
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.AdditionalTransformsToggle"));
+                _options.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, _options.RemainAllPBTransforms);
+
+                GUIContent content_ii = new GUIContent(
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.IncludeIgnoreTransformsToggle"),
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.IncludeIgnoreTransformsToggle"));
+                _options.IncludeIgnoreTransforms = EditorGUILayout.Toggle(content_ii, _options.IncludeIgnoreTransforms);
+
+                GUIContent content_rr = new GUIContent(
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.RenameRootTransformToggle"),
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.RenameRootTransformToggle"));
+                _options.RenameRootTransform = EditorGUILayout.Toggle(content_rr, _options.RenameRootTransform);
+
+                GUI.enabled = true;
+
+                GUIContent content_sr = new GUIContent(
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.SpecifyRootObjectLabel"),
+                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.SpecifyRootObjectLabel"));
+                _options.RootObject = (GameObject)EditorGUILayout.ObjectField(content_sr, _options.RootObject, typeof(GameObject), true);    
             }
+
+
+            EditorGUILayout.EndScrollView();
+            
         }
 
-        private (GameObject, int) CheckObjects(GameObject targetObject)
+        private void CreateModule()
         {
-            Checktarget(targetObject);
-            CheckPrefabAsset(targetObject);
-            GameObject root = CheckRoot(targetObject);
-            CheckSkin(targetObject);
-            CheckHips(root);
+            GameObject root = TraceObjects.CheckTargets(_skinnedMeshRenderers.Select(r => r.gameObject));
 
-            //skin_index: 複製先でSkinnedMeshRendererがついたオブジェクトを追跡するためのインデックス
-            Transform[] AllChildren = GetAllChildren(root);
-            int skin_index = Array.IndexOf(AllChildren, targetObject.transform);
-
-            return (root, skin_index);
-
-
-            void Checktarget(GameObject targetObject)
+            if (_options.MergePrefab)
             {
-                if (targetObject == null)
-                {
-                    throw new InvalidOperationException("Target object is not set.");
-                }
-            }
+                string mesh_name = $"{root.name} Parts";
+                (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(root, mesh_name);
+                new_root.transform.position = Vector3.zero;
 
-            void CheckPrefabAsset(GameObject targetObject)
-            {
-                if (PrefabUtility.IsPartOfPrefabAsset(targetObject))
-                {
-                    throw new InvalidOperationException("Please run it on the prefab instance in the hierarchy, not on the prefabasset.");
-                }
-            }
+                List<SkinnedMeshRenderer> newskinnedMeshRenderers = TraceObjects.TraceCopiedRenderers(root, new_root, _skinnedMeshRenderers).ToList();
 
-            GameObject CheckRoot(GameObject targetObject)
-            {
-                if (Settings.RootObject) return Settings.RootObject;
-                //親オブジェクトが存在するか確認
-                Transform parent = targetObject.transform.parent;
-                if (parent == null)
+                for (int i = 0; i < newskinnedMeshRenderers.Count(); i++)
                 {
-                    throw new InvalidOperationException("Please select the object with SkinnedMeshRenderer directly under the avatar/costume");
-                }
-
-                GameObject root;
-                if (PrefabUtility.IsPartOfPrefabInstance(targetObject))
-                {
-                    root = PrefabUtility.GetNearestPrefabInstanceRoot(targetObject);
-                }
-                else
-                {
-                    root = parent.gameObject;
-                }
-                return root;
-            }
-
-            void CheckSkin(GameObject targetObject)
-            {
-                SkinnedMeshRenderer skinnedMeshRenderer = targetObject.GetComponent<SkinnedMeshRenderer>();
-                if (skinnedMeshRenderer == null)
-                {
-                    
-                    throw new InvalidOperationException($"'{targetObject.name}' does not have a SkinnedMeshRenderer.");
-                }
-            }
-
-            void CheckHips(GameObject root)
-            {
-                GameObject hips = null;
-                foreach (Transform child in root.transform)
-                {
-                    foreach (Transform grandChild in child.transform)
+                    var triangleindies = _targetselections[i];
+                    if (triangleindies.Count() > 0)
                     {
-                        if (grandChild.name.ToLower().StartsWith("hip"))
-                        {
-                            hips = grandChild.gameObject;
-                            break;
-                        }
+                        Mesh newMesh = MeshHelper.KeepMesh(newskinnedMeshRenderers[i].sharedMesh, triangleindies.ToHashSet());
+                        string path = AssetPathUtility.GenerateMeshPath(root.name, "PartialMesh");
+                        AssetDatabase.CreateAsset(newMesh, path);
+                        AssetDatabase.SaveAssets();
+                        newskinnedMeshRenderers[i].sharedMesh = newMesh;
                     }
                 }
-                if (hips == null)
-                {
-                    //throw new InvalidOperationException("Hips not found under the root object.");
-                    Debug.LogWarning("Hips could not be found. Merge Armature/Setup Outfit may not work properly.");
-                }
-            }
 
-        }
-            private (GameObject, string) CopyRootObject(GameObject root_object, string source_name)
-        {
-            string variantPath = GenerateVariantPath(root_object, source_name);
-
-            GameObject new_root = PrefabUtility.SaveAsPrefabAsset(root_object, variantPath);        
-            if (new_root == null)
-            {
-                throw new InvalidOperationException("Prefab creation failed.");
-            }
-            return (new_root, variantPath);
-
-
-            string GenerateVariantPath(GameObject root_object, string source_name)
-            {
-                string base_path = $"Assets/ModuleCreator";
-                if (!AssetDatabase.IsValidFolder(base_path))
-                {
-                    AssetDatabase.CreateFolder("Assets", "ModuleCreator");
-                    AssetDatabase.Refresh();
-                }
-                
-                string folderPath = $"{base_path}/{root_object.name}";
-                if (!AssetDatabase.IsValidFolder(folderPath))
-                {
-                    AssetDatabase.CreateFolder(base_path, root_object.name);
-                    AssetDatabase.Refresh();
-                }
-
-                string fileName = $"{source_name}_MA";
-                string fileExtension = "prefab";
-                
-                return AssetDatabase.GenerateUniqueAssetPath(folderPath + "/" + fileName + "." + fileExtension);
-            }
-        }
-
-        private void CleanUpHierarchy(GameObject new_root, int skin_index)
-        {   
-            HashSet<GameObject> objectsToSave = new HashSet<GameObject>();
-
-            // 複製先のSkinnedMeshRendererがついたオブジェクトを追加
-            Transform[] AllChildren = GetAllChildren(new_root);
-            GameObject skin = AllChildren[skin_index].gameObject;
-            objectsToSave.Add(skin);
-
-            SkinnedMeshRenderer skinnedMeshRenderer = skin.GetComponent<SkinnedMeshRenderer>();
-
-            // SkinnedMeshRendererのrootBoneとanchor overrideに設定されているオブジェクトを追加
-            Transform rootBone = skinnedMeshRenderer.rootBone;
-            Transform anchor = skinnedMeshRenderer.probeAnchor;
-            if (rootBone) objectsToSave.Add(rootBone.gameObject);
-            if (anchor) objectsToSave.Add(anchor.gameObject);
-
-            // ウェイトをつけているオブジェクトを追加
-            HashSet<GameObject> weightedBones = GetWeightedBones(skinnedMeshRenderer);
-            Debug.Log($"Bones weighting {skin.name}: {weightedBones.Count}/{skinnedMeshRenderer.bones.Length}");
-            objectsToSave.UnionWith(weightedBones);
-
-            // PhysBoneに関連するオブジェクトを追加
-            if (Settings.IncludePhysBone == true) 
-            {
-                HashSet<GameObject> PhysBoneObjects = FindPhysBoneObjects(new_root, weightedBones);
-                objectsToSave.UnionWith(PhysBoneObjects);
-            }
-
-            CheckAndDeleteRecursive(new_root, objectsToSave);
-        }
-
-        private HashSet<GameObject> GetWeightedBones(SkinnedMeshRenderer skinnedMeshRenderer)
-        {
-            BoneWeight[] boneWeights = skinnedMeshRenderer.sharedMesh.boneWeights;
-            Transform[] bones = skinnedMeshRenderer.bones;
-            HashSet<GameObject> weightedBones = new HashSet<GameObject>();
-            bool hasNullBone = false;
-
-            foreach (BoneWeight boneWeight in boneWeights)
-            {
-                if (boneWeight.weight0 > 0)
-                {
-                    Transform boneTransform = bones[boneWeight.boneIndex0];
-                    if (boneTransform == null) hasNullBone = true;
-                    else weightedBones.Add(boneTransform.gameObject);
-                }
-
-                if (boneWeight.weight1 > 0)
-                {
-                    Transform boneTransform = bones[boneWeight.boneIndex1];
-                    if (boneTransform == null) hasNullBone = true;
-                    else weightedBones.Add(boneTransform.gameObject);
-                }
-
-                if (boneWeight.weight2 > 0)
-                {
-                    Transform boneTransform = bones[boneWeight.boneIndex2];
-                    if (boneTransform == null) hasNullBone = true;
-                    else weightedBones.Add(boneTransform.gameObject);
-                }
-
-                if (boneWeight.weight3 > 0)
-                {
-                    Transform boneTransform = bones[boneWeight.boneIndex3];
-                    if (boneTransform == null) hasNullBone = true;
-                    else weightedBones.Add(boneTransform.gameObject);
-                }
-            }
-
-            if (hasNullBone)
-            {
-                //Debug.LogWarning()
-                throw new InvalidOperationException("Some bones weighting mesh could not be found");
-            }
-
-            return weightedBones;
-        }
-
-        private void CheckAndDeleteRecursive(GameObject obj, HashSet<GameObject> objectsToSave)
-        {   
-            List<GameObject> children = GetChildren(obj);
-
-            // 子オブジェクトに対して再帰的に処理を適用
-            foreach (GameObject child in children)
-            {   
-                CheckAndDeleteRecursive(child, objectsToSave);
-            }
-
-            // 削除しない条件
-            if (objectsToSave.Contains(obj) || obj.transform.childCount != 0)
-            {
-                ActivateObject(obj);
-                RemoveComponents(obj);
-                return;
-            }
-            
-            UnityEngine.Object.DestroyImmediate(obj, true);
-        }
-
-        private List<GameObject> GetChildren(GameObject parent)
-        {
-            List<GameObject> children = new List<GameObject>();
-            foreach (Transform child in parent.transform)
-            {
-                children.Add(child.gameObject);
-            }
-            return children;
-        }
-
-        private static Transform[] GetAllChildren(GameObject parent)
-        {
-            Transform[] children = parent.GetComponentsInChildren<Transform>(true);
-            return children;
-        }
-
-        private void ActivateObject(GameObject obj)
-        {
-            obj.SetActive(true);
-            obj.tag = "Untagged"; 
-        }
-
-        private void RemoveComponents(GameObject targetGameObject)
-        {
-            // 削除対象のomponentを列挙
-            List<Component> componentsToRemove;
-            if (Settings.IncludePhysBone == true)
-            {
-                componentsToRemove = targetGameObject.GetComponents<Component>()
-                    .Where(c => !(c is Transform) && !(c is SkinnedMeshRenderer)&& !(c is VRCPhysBone) && !(c is VRCPhysBoneCollider))
-                    .ToList();
+                ModuleCreatorProcessor.CreateModule(new_root, newskinnedMeshRenderers, _options, root.scene);
+                Debug.Log("Saved prefab to " + variantPath);
             }
             else
             {
-                componentsToRemove = targetGameObject.GetComponents<Component>()
-                    .Where(c => !(c is Transform) && !(c is SkinnedMeshRenderer))
-                    .ToList();
-            }
-
-            foreach (var component in componentsToRemove)
-            {
-                UnityEngine.Object.DestroyImmediate(component, true);
-            }
-        }
-
-        private HashSet<GameObject> FindPhysBoneObjects(GameObject root, HashSet<GameObject> weightedBones)
-        {
-            var physBoneObjects = new HashSet<GameObject>();
-
-            // PhysBoneに対する処理
-            foreach (VRCPhysBone physBone in root.GetComponentsInChildren<VRCPhysBone>(true))
-            {
-                if (physBone.rootTransform == null) physBone.rootTransform = physBone.transform;
-                var weightedPBObjects = GetWeightedPhysBoneObjects(physBone, weightedBones);
-
-                // 有効なPhysBoneだった場合
-                if (weightedPBObjects.Count > 0)
+                for (int i = 0; i < _skinnedMeshRenderers.Count(); i++)
                 {
-                    //MAの仕様に反し衣装側のPBを強制
-                    if (Settings.RenameRootTransform == true)
-                    {
-                        physBone.rootTransform.name += ".1";
-                    }
+                    string mesh_name = _skinnedMeshRenderers[i].name;
+                    (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(root, mesh_name);
+                    new_root.transform.position = Vector3.zero;
 
-                    physBoneObjects.Add(physBone.gameObject);
-                    physBoneObjects.UnionWith(weightedPBObjects);
-
-                    if (Settings.IncludePhysBoneColider == true)
+                    var newskinnedMeshRender = TraceObjects.TraceCopiedRenderer(root, new_root, _skinnedMeshRenderers[i]);
+                    var triangleindies = _targetselections[i];
+                    if (triangleindies.Count() > 0)
                     {
-                        foreach (VRCPhysBoneCollider collider in physBone.colliders)
-                        {
-                            if (collider == null) continue;
-                            if (collider.rootTransform == null) collider.rootTransform = collider.transform;
-                            physBoneObjects.Add(collider.gameObject);
-                            physBoneObjects.Add(collider.rootTransform.gameObject);
-                        }
+                        Mesh newMesh = MeshHelper.KeepMesh(newskinnedMeshRender.sharedMesh, triangleindies.ToHashSet());
+                        string path = AssetPathUtility.GenerateMeshPath(root.name, "PartialMesh");
+                        AssetDatabase.CreateAsset(newMesh, path);
+                        AssetDatabase.SaveAssets();
+                        newskinnedMeshRender.sharedMesh = newMesh;
                     }
+                    ModuleCreatorProcessor.CreateModule(new_root, new List<SkinnedMeshRenderer>{ newskinnedMeshRender }, _options, root.scene);
+                    Debug.Log("Saved prefab to " + variantPath);
+
                 }
+
+            }
                 
-                // 無効なPhysBoneはここで削除
-                else UnityEngine.Object.DestroyImmediate(physBone, true);
-            }
-
-            // PhysBoneColiderに対する処理
-            ProcessPhysBoneColliders(root, physBoneObjects);
-
-            return physBoneObjects;
         }
 
-        private void AddSingleChildRecursive(Transform transform, HashSet<GameObject> result, HashSet<Transform> ignoreTransforms)
-        {   
-            if (Settings.IncludeIgnoreTransforms == false && ignoreTransforms.Contains(transform)) return;
-            result.Add(transform.gameObject);   
-            if (transform.childCount == 1)
-            {
-                Transform child = transform.GetChild(0);
-                AddSingleChildRecursive(child, result, ignoreTransforms);
-            }
-        }
-
-        private HashSet<Transform> GetIgnoreTransforms(VRCPhysBone physBone)
-        {
-            HashSet<Transform> AffectedIgnoreTransforms = new HashSet<Transform>();
-
-            foreach (Transform ignoreTransform in physBone.ignoreTransforms)
-            {   
-                if (ignoreTransform == null) continue;
-                Transform[] AffectedIgnoreTransform = GetAllChildren(ignoreTransform.gameObject);
-                AffectedIgnoreTransforms.UnionWith(AffectedIgnoreTransform);
-            }
-
-            return AffectedIgnoreTransforms;
-        }
-
-
-        private HashSet<GameObject> GetWeightedPhysBoneObjects(VRCPhysBone physBone, HashSet<GameObject> weightedBones)
-        {
-            var WeightedPhysBoneObjects = new HashSet<GameObject>();
-            HashSet<Transform> ignoreTransforms = GetIgnoreTransforms(physBone);
-
-            Transform[] allchildren = GetAllChildren(physBone.rootTransform.gameObject);
-
-            foreach (Transform child in allchildren)
-            {
-                if (weightedBones.Contains(child.gameObject))
-                {
-                    if (Settings.RemainAllPBTransforms == true)
-                    {
-                        WeightedPhysBoneObjects.UnionWith(allchildren.Select(t => t.gameObject));
-                        break;
-
-                    }
-                    HashSet<GameObject> result = new HashSet<GameObject>();
-                    AddSingleChildRecursive(child, result, ignoreTransforms);
-                    WeightedPhysBoneObjects.UnionWith(result);
-                }
-            }
-
-            return WeightedPhysBoneObjects;
-        }
-
-        private void ProcessPhysBoneColliders(GameObject root, HashSet<GameObject> physBoneObjects)
-        {
-            foreach (VRCPhysBoneCollider collider in root.GetComponentsInChildren<VRCPhysBoneCollider>(true))
-            {   
-                // 必要なPhysBoneColliderに対する処理
-                if (physBoneObjects.Contains(collider.gameObject))
-                {
-                    //MAの仕様に反し衣装側のPBCを強制
-                    if (Settings.RenameRootTransform == true)
-                    {
-                        collider.rootTransform.name += ".1";
-                        //Debug.Log(collider.rootTransform.name);
-                    }
-                }
-
-                // 不要なPhysBoneColliderはここで削除
-                else
-                {
-                    UnityEngine.Object.DestroyImmediate(collider, true);
-                }
-            }
-        }
 
     }
 }
