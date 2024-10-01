@@ -11,6 +11,7 @@
   "url": "https://github.com/Tliks/ModuleCreator",
   "changelogUrl": "https://github.com/Tliks/ModuleCreator/blob/main/CHANGELOG.md",
   "vpmDependencies": {
-    "com.vrchat.avatars": ">=3.0.0"
+    "com.vrchat.avatars": ">=3.0.0",
+    "com.aoyon.triangleselector": ">=0.1.0"
   }
 }
