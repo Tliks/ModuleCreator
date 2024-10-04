@@ -5,23 +5,19 @@ using UnityEngine;
 using com.aoyon.triangleselector;
 using com.aoyon.triangleselector.utils;
 
-
 namespace com.aoyon.modulecreator
 {   
 
     public class ModuleCreator : EditorWindow
     {
+        private GameObject _root;
         private List<SkinnedMeshRenderer> _skinnedMeshRenderers;
         private List<List<Vector3>> _targetselections = new();
         private RenderSelector[] _renderSelectors;
 
         private Vector2 scrollPosition;
-
-
         private static ModuleCreatorOptions _options;
-
         private static bool _showAdvancedOptions = false;
-
 
         public static void ShowWindow(SkinnedMeshRenderer[] skinnedMeshRenderers)
         {
@@ -34,6 +30,7 @@ namespace com.aoyon.modulecreator
         {
             _skinnedMeshRenderers = skinnedMeshRenderers.ToList();
             _options = new();
+            _root = TraceObjects.CheckTargets(_skinnedMeshRenderers.Select(r => r.gameObject));
 
             int rendererCount = _skinnedMeshRenderers.Count;
             _renderSelectors = new RenderSelector[rendererCount];
@@ -41,13 +38,14 @@ namespace com.aoyon.modulecreator
             for (int i = 0; i < rendererCount; i++)
             {
                 var renderSelector = CreateInstance<RenderSelector>();
-                var targetSelection = new List<int>();
-                renderSelector.Initialize(_skinnedMeshRenderers[i], targetSelection, "(100%)%");
-                renderSelector.RegisterApplyCallback(newSelection => _targetselections[i] = newSelection);
+                var targetSelection = new List<Vector3>();
+                renderSelector.Initialize(_skinnedMeshRenderers[i], targetSelection, "default (100%)");
+                int currentIndex = i;
+                renderSelector.RegisterApplyCallback(newSelection => _targetselections[currentIndex] = newSelection);
                 _renderSelectors[i] = renderSelector;
                 _targetselections.Add(targetSelection);
             }
-        }
+        } 
 
         void OnDestroy()
         {
@@ -56,7 +54,7 @@ namespace com.aoyon.modulecreator
                 renderSelector.Dispose();
             }
         }
-        
+
         void OnGUI()
         {
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
@@ -67,23 +65,25 @@ namespace com.aoyon.modulecreator
             
             // 各Rendererに対するUI
             EditorGUILayout.Space();
+
             for (int i = 0; i < _skinnedMeshRenderers.Count(); i++)
             {
                 using (new GUILayout.HorizontalScope())
                 {
-                    float width3 = 80f;
+                    float width3 = 70f;
                     float margin = 14f;
                     float remainingWidth = position.width - width3 - margin;
 
-                    float width1 = remainingWidth * 0.65f;
-                    float width2 = remainingWidth * 0.35f;
+                    float width1 = remainingWidth * 0.55f;
+                    float width2 = remainingWidth * 0.45f;
 
+                    GUI.enabled = TriangleSelector.Disposed;
                     _skinnedMeshRenderers[i] = (SkinnedMeshRenderer)EditorGUILayout.ObjectField(_skinnedMeshRenderers[i], typeof(SkinnedMeshRenderer), true, GUILayout.Width(width1));
-
                     _renderSelectors[i].RenderTriangleSelection(new GUILayoutOption[]{ GUILayout.Width(width2)});
+                    GUI.enabled = true;
 
                     string[] labels = new string[]{ "Edit", "Edit", "Close" };
-                    GUILayoutOption[] options = new GUILayoutOption[]{ GUILayout.Width(80f), GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false)};
+                    GUILayoutOption[] options = new GUILayoutOption[]{ GUILayout.Width(width3), GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false)};
                     _renderSelectors[i].RenderEditSelection(labels, options);
                 }
             }
@@ -100,9 +100,13 @@ namespace com.aoyon.modulecreator
 
             EditorGUILayout.Space();
 
+            GUI.enabled = _skinnedMeshRenderers.Count > 1;
             _options.MergePrefab = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.MergePrefab"), _options.MergePrefab);
+            GUI.enabled = true;
+            
+            GUI.enabled = _targetselections.Any(s => s.Count > 0);
             _options.Outputunselected = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.OutputUnselcted"), _options.Outputunselected);
-
+            GUI.enabled = true;
 
             // 実行ボタン
             EditorGUILayout.Space();
@@ -153,15 +157,14 @@ namespace com.aoyon.modulecreator
 
         private void CreateModule()
         {
-            GameObject root = TraceObjects.CheckTargets(_skinnedMeshRenderers.Select(r => r.gameObject));
-
+            
             if (_options.MergePrefab)
             {
-                string mesh_name = $"{root.name} Parts";
-                (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(root, mesh_name);
+                string mesh_name = $"{_root.name} Parts";
+                (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(_root, mesh_name);
                 new_root.transform.position = Vector3.zero;
 
-                List<SkinnedMeshRenderer> newskinnedMeshRenderers = TraceObjects.TraceCopiedRenderers(root, new_root, _skinnedMeshRenderers).ToList();
+                List<SkinnedMeshRenderer> newskinnedMeshRenderers = TraceObjects.TraceCopiedRenderers(_root, new_root, _skinnedMeshRenderers).ToList();
 
                 for (int i = 0; i < newskinnedMeshRenderers.Count(); i++)
                 {
@@ -169,14 +172,15 @@ namespace com.aoyon.modulecreator
                     if (triangleindies.Count() > 0)
                     {
                         Mesh newMesh = MeshHelper.KeepMesh(newskinnedMeshRenderers[i].sharedMesh, triangleindies.ToHashSet());
-                        string path = AssetPathUtility.GenerateMeshPath(root.name, "PartialMesh");
+                        string path = AssetPathUtility.GenerateMeshPath(_root.name, "PartialMesh");
                         AssetDatabase.CreateAsset(newMesh, path);
                         AssetDatabase.SaveAssets();
                         newskinnedMeshRenderers[i].sharedMesh = newMesh;
+                        //MeshHelper.RemoveUnusedMaterials(newskinnedMeshRenderers[i]);
                     }
                 }
 
-                ModuleCreatorProcessor.CreateModule(new_root, newskinnedMeshRenderers, _options, root.scene);
+                ModuleCreatorProcessor.CreateModule(new_root, newskinnedMeshRenderers, _options, _root.scene);
                 Debug.Log("Saved prefab to " + variantPath);
             }
             else
@@ -184,20 +188,21 @@ namespace com.aoyon.modulecreator
                 for (int i = 0; i < _skinnedMeshRenderers.Count(); i++)
                 {
                     string mesh_name = _skinnedMeshRenderers[i].name;
-                    (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(root, mesh_name);
+                    (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(_root, mesh_name);
                     new_root.transform.position = Vector3.zero;
 
-                    var newskinnedMeshRender = TraceObjects.TraceCopiedRenderer(root, new_root, _skinnedMeshRenderers[i]);
+                    var newskinnedMeshRender = TraceObjects.TraceCopiedRenderer(_root, new_root, _skinnedMeshRenderers[i]);
                     var triangleindies = _targetselections[i];
                     if (triangleindies.Count() > 0)
                     {
                         Mesh newMesh = MeshHelper.KeepMesh(newskinnedMeshRender.sharedMesh, triangleindies.ToHashSet());
-                        string path = AssetPathUtility.GenerateMeshPath(root.name, "PartialMesh");
+                        string path = AssetPathUtility.GenerateMeshPath(_root.name, "PartialMesh");
                         AssetDatabase.CreateAsset(newMesh, path);
                         AssetDatabase.SaveAssets();
                         newskinnedMeshRender.sharedMesh = newMesh;
+                        //MeshHelper.RemoveUnusedMaterials(newskinnedMeshRender);
                     }
-                    ModuleCreatorProcessor.CreateModule(new_root, new List<SkinnedMeshRenderer>{ newskinnedMeshRender }, _options, root.scene);
+                    ModuleCreatorProcessor.CreateModule(new_root, new List<SkinnedMeshRenderer>{ newskinnedMeshRender }, _options, _root.scene);
                     Debug.Log("Saved prefab to " + variantPath);
 
                 }
