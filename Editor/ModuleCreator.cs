@@ -104,7 +104,7 @@ namespace com.aoyon.modulecreator
             _options.MergePrefab = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.MergePrefab"), _options.MergePrefab);
             GUI.enabled = true;
             
-            GUI.enabled = _targetselections.Any(s => s.Count > 0);
+            GUI.enabled = !_options.MergePrefab && _targetselections.Any(s => s.Count > 0);
             _options.Outputunselected = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.OutputUnselcted"), _options.Outputunselected);
             GUI.enabled = true;
 
@@ -187,30 +187,36 @@ namespace com.aoyon.modulecreator
             {
                 for (int i = 0; i < _skinnedMeshRenderers.Count(); i++)
                 {
-                    string mesh_name = _skinnedMeshRenderers[i].name;
-                    (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(_root, mesh_name);
-                    new_root.transform.position = Vector3.zero;
+                    ProcessMeshRenderer(_skinnedMeshRenderers[i], _targetselections[i], false);
 
-                    var newskinnedMeshRender = TraceObjects.TraceCopiedRenderer(_root, new_root, _skinnedMeshRenderers[i]);
-                    var triangleindies = _targetselections[i];
-                    if (triangleindies.Count() > 0)
+                    if (_options.Outputunselected)
                     {
-                        Mesh newMesh = MeshHelper.KeepMesh(newskinnedMeshRender.sharedMesh, triangleindies.ToHashSet());
-                        string path = AssetPathUtility.GenerateMeshPath(_root.name, "PartialMesh");
-                        AssetDatabase.CreateAsset(newMesh, path);
-                        AssetDatabase.SaveAssets();
-                        newskinnedMeshRender.sharedMesh = newMesh;
-                        //MeshHelper.RemoveUnusedMaterials(newskinnedMeshRender);
+                        ProcessMeshRenderer(_skinnedMeshRenderers[i], _targetselections[i], true);
                     }
-                    ModuleCreatorProcessor.CreateModule(new_root, new List<SkinnedMeshRenderer>{ newskinnedMeshRender }, _options, _root.scene);
-                    Debug.Log("Saved prefab to " + variantPath);
-
                 }
-
             }
-                
+
         }
 
+        private void ProcessMeshRenderer(SkinnedMeshRenderer renderer, IEnumerable<Vector3> triangleIndices, bool outputUnselected)
+        {
+            string meshName = renderer.name + (outputUnselected ? " Other" : "");
+            (GameObject newRoot, string variantPath) = ModuleCreatorProcessor.SaveRootObject(_root, meshName);
+            newRoot.transform.position = Vector3.zero;
 
+            var newSkinnedMeshRender = TraceObjects.TraceCopiedRenderer(_root, newRoot, renderer);
+            Mesh newMesh = outputUnselected 
+                ? MeshHelper.DeleteMesh(newSkinnedMeshRender.sharedMesh, triangleIndices) 
+                : MeshHelper.KeepMesh(newSkinnedMeshRender.sharedMesh, triangleIndices);
+
+            string path = AssetPathUtility.GenerateMeshPath(_root.name, "PartialMesh");
+            AssetDatabase.CreateAsset(newMesh, path);
+            AssetDatabase.SaveAssets();
+            newSkinnedMeshRender.sharedMesh = newMesh;
+            //MeshHelper.RemoveUnusedMaterials(newSkinnedMeshRender);
+            ModuleCreatorProcessor.CreateModule(newRoot, new List<SkinnedMeshRenderer> { newSkinnedMeshRender }, _options, _root.scene);
+            Debug.Log("Saved prefab to " + variantPath);
+        }
+                
     }
 }
