@@ -12,8 +12,7 @@ namespace com.aoyon.modulecreator
     public class ModuleCreator : EditorWindow
     {
         private List<SkinnedMeshRenderer> _skinnedMeshRenderers;
-
-        private List<List<int>> _targetselections = new();
+        private List<List<Vector3>> _targetselections = new();
         private RenderSelector[] _renderSelectors;
 
         private Vector2 scrollPosition;
@@ -38,7 +37,7 @@ namespace com.aoyon.modulecreator
 
             int rendererCount = _skinnedMeshRenderers.Count;
             _renderSelectors = new RenderSelector[rendererCount];
-            _targetselections = new List<List<int>>(rendererCount);
+            _targetselections = new List<List<Vector3>>(rendererCount);
             for (int i = 0; i < rendererCount; i++)
             {
                 var renderSelector = CreateInstance<RenderSelector>();
