@@ -1,16 +1,16 @@
 {
-  "name": "com.aoyon.module-creator.Editor",
+  "name": "com.aoyon.modulecreator.Editor",
   "references": [
     "VRC.SDK3A",
     "VRC.SDK3A.Editor",
     "VRC.SDKBase",
     "VRC.SDKBase.Editor",
-    "com.aoyon.module-creator"
+    "com.aoyon.triangleselector"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
-  "autoReferenced": true,
+  "autoReferenced": false,
   "overrideReferences": false,
   "precompiledReferences": [],
   "defineConstraints": [],

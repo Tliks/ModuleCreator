@@ -1,89 +1,62 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class ModuleCreatorWindow : EditorWindow
+namespace com.aoyon.modulecreator
 {
-    public SkinnedMeshRenderer skinnedMeshRenderer;
-    private static ModuleCreatorSettings Settings;
-    private const int MENU_PRIORITY = 49;
-
-    private bool showAdvancedOptions = false;
-
-    [MenuItem("GameObject/Module Creator/Create Module", false, MENU_PRIORITY)]
-    private static void CreateModule(MenuCommand menuCommand)
+    public class MenuItems : EditorWindow
     {
-        GameObject sourceObject = menuCommand.context as GameObject;
+        private const int MENU_PRIORITY = 49;
+        private static int count = 0;
 
-        ModuleCreatorSettings settings = new ModuleCreatorSettings();
-        ModuleCreator moduleCreator = new ModuleCreator(settings);
+        private const string MCPATH = "GameObject/Module Creator";
 
-        moduleCreator.CheckAndCopyBones(sourceObject);
-    }
+        private const string CREATEMODULE = "Create Module"; 
 
-    [MenuItem("Window/Module Creator")]
-    public static void ShowWindow()
-    {
-        GetWindow<ModuleCreatorWindow>("Module Creator");
-    }
-
-    private void OnEnable()
-    {
-        Settings = new ModuleCreatorSettings();
-    }
-
-    private void OnGUI()
-    {
-        skinnedMeshRenderer = (SkinnedMeshRenderer)EditorGUILayout.ObjectField("Skinned Mesh Renderer", skinnedMeshRenderer, typeof(SkinnedMeshRenderer), true);
-
-        //EditorGUILayout.Space(); 
-
-        // Checkboxes
-        Settings.IncludePhysBone = EditorGUILayout.Toggle("PhysBone ", Settings.IncludePhysBone);
-
-        //if (Settings.IncludePhysBone == false) Settings.IncludePhysBoneColider = false;
-        GUI.enabled = Settings.IncludePhysBone;
-        Settings.IncludePhysBoneColider = EditorGUILayout.Toggle("PhysBoneColider", Settings.IncludePhysBoneColider);
-        GUI.enabled = true;
-
-        EditorGUILayout.Space(); 
-
-        showAdvancedOptions = EditorGUILayout.Foldout(showAdvancedOptions, "Advanced Options");
-        if (showAdvancedOptions)
+        [MenuItem(MCPATH + "/" + CREATEMODULE, true, MENU_PRIORITY)]
+        static bool CreateModuleValidation()
         {
-            GUI.enabled = Settings.IncludePhysBone;
-
-            //if (Settings.IncludePhysBone == false) Settings.RemainAllPBTransforms = false;
-            GUIContent content_at = new GUIContent("Additional Transforms", "Output Additional PhysBones Affected Transforms for exact PhysBone movement");
-            Settings.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, Settings.RemainAllPBTransforms);
-
-            //if (Settings.IncludePhysBone == false) Settings.IncludeIgnoreTransforms = false;
-            GUIContent content_ii = new GUIContent("Include IgnoreTransforms", "Output PhysBone's IgnoreTransforms");
-            Settings.IncludeIgnoreTransforms = EditorGUILayout.Toggle(content_ii, Settings.IncludeIgnoreTransforms);
-
-            //if (Settings.IncludePhysBone == false) Settings.RenameRootTransform = false;
-            GUIContent content_rr = new GUIContent(
-                "Rename RootTransform", 
-                "Not Recommended: Due to the specifications of modular avatar, costume-side physbones may be deleted in some cases, so renaming physbone RootTransform will ensure that the costume-side physbones are integrated. This may cause duplication.");
-            Settings.RenameRootTransform = EditorGUILayout.Toggle(content_rr, Settings.RenameRootTransform);
-
-            GUI.enabled = true;
-            
-            GUIContent content_sr = new GUIContent("Specify Root Object", "The default root object is the parent object of the specified skinned mesh rendrer object");
-            Settings.RootObject = (GameObject)EditorGUILayout.ObjectField(content_sr, Settings.RootObject, typeof(GameObject), true);
+            return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<SkinnedMeshRenderer>() != null;
         }
 
-        //settings.LogSettings();
+        [MenuItem(MCPATH + "/" + CREATEMODULE, false, MENU_PRIORITY)]
+        static void CreateModule()
+        {
+            count++; 
+            if (count != Selection.gameObjects.Count()) return;
 
-        EditorGUILayout.Space(); 
+            foreach (var obj in Selection.gameObjects)
+            {
+                var skinnedMeshRenderer = obj.GetComponent<SkinnedMeshRenderer>();
+                ModuleCreatorProcessor.CheckAndCopyBones(new List<SkinnedMeshRenderer> {skinnedMeshRenderer}, new ModuleCreatorOptions());
+            }
+
+            count = 0;
+        }
         
-        GUI.enabled = skinnedMeshRenderer != null;
-        if (GUILayout.Button("Create Module"))
+        private const string CREATEMODULETR= "Create Module (Advanced)";
+
+        [MenuItem(MCPATH + "/" + CREATEMODULETR, true, MENU_PRIORITY)]
+        static bool CreateModuleTRValidation()
         {
-            ModuleCreator moduleCreator = new ModuleCreator(Settings);
-            moduleCreator.CheckAndCopyBones(skinnedMeshRenderer.gameObject);
+            return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<SkinnedMeshRenderer>() != null;
         }
-        GUI.enabled = true;
+
+        [MenuItem(MCPATH + "/" + CREATEMODULETR, false, MENU_PRIORITY)]
+        static void CreateModuleTR()
+        {
+            count++;
+            if (count == Selection.gameObjects.Count())
+            {
+                SkinnedMeshRenderer[] skinnedMeshRenderers = Selection.gameObjects
+                    .Select(obj => obj.GetComponent<SkinnedMeshRenderer>())
+                    .Where(renderer => renderer != null)
+                    .ToArray();
+                ModuleCreator.ShowWindow(skinnedMeshRenderers);
+                count = 0;
+            }
+        }
     }
 
 }
-
