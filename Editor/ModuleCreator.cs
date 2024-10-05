@@ -102,11 +102,19 @@ namespace com.aoyon.modulecreator
             EditorGUILayout.Space();
 
             GUI.enabled = _skinnedMeshRenderers.Count > 1;
-            _options.MergePrefab = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.MergePrefab"), _options.MergePrefab);
+            using (new GUILayout.HorizontalScope())
+            {
+                _options.MergePrefab = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.MergePrefab"), _options.MergePrefab);
+                RenderInfo(GetLocalizedText("Utility.ModuleCreator.MergePrefab.tooltip"));
+            }
             GUI.enabled = true;
             
             GUI.enabled = !_options.MergePrefab && _targetselections.Any(s => s.Count > 0);
-            _options.Outputunselected = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.OutputUnselcted"), _options.Outputunselected);
+            using (new GUILayout.HorizontalScope())
+            {
+                _options.Outputunselected = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.OutputUnselcted"), _options.Outputunselected);
+                RenderInfo(GetLocalizedText("Utility.ModuleCreator.OutputUnselcted.tooltip"));
+            }
             GUI.enabled = true;
 
             // 実行ボタン
@@ -128,27 +136,31 @@ namespace com.aoyon.modulecreator
             { 
                 GUI.enabled = _options.IncludePhysBone;
 
-                GUIContent content_at = new GUIContent(
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.AdditionalTransformsToggle"),
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.AdditionalTransformsToggle"));
-                _options.RemainAllPBTransforms = EditorGUILayout.Toggle(content_at, _options.RemainAllPBTransforms);
+                using (new GUILayout.HorizontalScope())
+                {
+                    _options.RemainAllPBTransforms = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.AdditionalTransformsToggle"), _options.RemainAllPBTransforms);
+                    RenderInfo(GetLocalizedText("Utility.ModuleCreator.tooltip.AdditionalTransformsToggle"));
+                }                
 
-                GUIContent content_ii = new GUIContent(
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.IncludeIgnoreTransformsToggle"),
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.IncludeIgnoreTransformsToggle"));
-                _options.IncludeIgnoreTransforms = EditorGUILayout.Toggle(content_ii, _options.IncludeIgnoreTransforms);
+                using (new GUILayout.HorizontalScope())
+                {
+                    _options.IncludeIgnoreTransforms = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.IncludeIgnoreTransformsToggle"), _options.IncludeIgnoreTransforms);
+                    RenderInfo(GetLocalizedText("Utility.ModuleCreator.tooltip.IncludeIgnoreTransformsToggle"));
+                }                
 
-                GUIContent content_rr = new GUIContent(
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.RenameRootTransformToggle"),
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.RenameRootTransformToggle"));
-                _options.RenameRootTransform = EditorGUILayout.Toggle(content_rr, _options.RenameRootTransform);
+                using (new GUILayout.HorizontalScope())
+                {
+                    _options.RenameRootTransform = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.RenameRootTransformToggle"), _options.RenameRootTransform);
+                    RenderInfo(GetLocalizedText("Utility.ModuleCreator.tooltip.RenameRootTransformToggle"));
+                }                
 
                 GUI.enabled = true;
 
-                GUIContent content_sr = new GUIContent(
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.SpecifyRootObjectLabel"),
-                    LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.tooltip.SpecifyRootObjectLabel"));
-                _options.RootObject = (GameObject)EditorGUILayout.ObjectField(content_sr, _options.RootObject, typeof(GameObject), true);    
+                using (new GUILayout.HorizontalScope())
+                {
+                    _options.RootObject = (GameObject)EditorGUILayout.ObjectField(GetLocalizedText("Utility.ModuleCreator.SpecifyRootObjectLabel"), _options.RootObject, typeof(GameObject), true);
+                    RenderInfo(GetLocalizedText("Utility.ModuleCreator.tooltip.SpecifyRootObjectLabel"));
+                }                
             }
 
 
@@ -217,6 +229,14 @@ namespace com.aoyon.modulecreator
             //MeshHelper.RemoveUnusedMaterials(newSkinnedMeshRender);
             ModuleCreatorProcessor.CreateModule(newRoot, new List<SkinnedMeshRenderer> { newSkinnedMeshRender }, _options, _root.scene);
             Debug.Log("Saved prefab to " + variantPath);
+        }
+
+        private void RenderInfo(string label)
+        {
+            GUIContent infoContent = new GUIContent(EditorGUIUtility.IconContent("_Help"));
+            infoContent.tooltip = label;
+            GUILayoutOption[] options = {GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false)};
+            GUILayout.Label(infoContent, options);
         }
                 
     }
