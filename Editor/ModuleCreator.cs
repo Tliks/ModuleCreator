@@ -135,7 +135,6 @@ namespace com.aoyon.modulecreator
             if (_showAdvancedOptions)
             { 
                 GUI.enabled = _options.IncludePhysBone;
-
                 using (new GUILayout.HorizontalScope())
                 {
                     _options.RemainAllPBTransforms = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.AdditionalTransformsToggle"), _options.RemainAllPBTransforms);
@@ -162,7 +161,6 @@ namespace com.aoyon.modulecreator
                     RenderInfo(GetLocalizedText("Utility.ModuleCreator.tooltip.SpecifyRootObjectLabel"));
                 }                
             }
-
 
             EditorGUILayout.EndScrollView();
             
@@ -200,11 +198,12 @@ namespace com.aoyon.modulecreator
             {
                 for (int i = 0; i < _skinnedMeshRenderers.Count(); i++)
                 {
-                    ProcessMeshRenderer(_skinnedMeshRenderers[i], _targetselections[i], false);
+                    var targetSelection = _targetselections[i];
+                    ProcessMeshRenderer(_skinnedMeshRenderers[i], targetSelection, false);
 
-                    if (_options.Outputunselected)
+                    if (_options.Outputunselected && targetSelection.Count() > 0)
                     {
-                        ProcessMeshRenderer(_skinnedMeshRenderers[i], _targetselections[i], true);
+                        ProcessMeshRenderer(_skinnedMeshRenderers[i], targetSelection, true);
                     }
                 }
             }
@@ -218,14 +217,17 @@ namespace com.aoyon.modulecreator
             newRoot.transform.position = Vector3.zero;
 
             var newSkinnedMeshRender = TraceObjects.TraceCopiedRenderer(_root, newRoot, renderer);
-            Mesh newMesh = outputUnselected 
-                ? MeshHelper.DeleteMesh(newSkinnedMeshRender.sharedMesh, triangleIndices) 
-                : MeshHelper.KeepMesh(newSkinnedMeshRender.sharedMesh, triangleIndices);
+            if (triangleIndices.Count() > 0)
+            {
+                Mesh newMesh = outputUnselected 
+                    ? MeshHelper.DeleteMesh(newSkinnedMeshRender.sharedMesh, triangleIndices) 
+                    : MeshHelper.KeepMesh(newSkinnedMeshRender.sharedMesh, triangleIndices);
 
-            string path = AssetPathUtility.GenerateMeshPath(_root.name, "PartialMesh");
-            AssetDatabase.CreateAsset(newMesh, path);
-            AssetDatabase.SaveAssets();
-            newSkinnedMeshRender.sharedMesh = newMesh;
+                string path = AssetPathUtility.GenerateMeshPath(_root.name, "PartialMesh");
+                AssetDatabase.CreateAsset(newMesh, path);
+                AssetDatabase.SaveAssets();
+                newSkinnedMeshRender.sharedMesh = newMesh;
+            }
             //MeshHelper.RemoveUnusedMaterials(newSkinnedMeshRender);
             ModuleCreatorProcessor.CreateModule(newRoot, new List<SkinnedMeshRenderer> { newSkinnedMeshRender }, _options, _root.scene);
             Debug.Log("Saved prefab to " + variantPath);
