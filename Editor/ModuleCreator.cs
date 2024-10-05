@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using com.aoyon.triangleselector;
 using com.aoyon.triangleselector.utils;
+using static com.aoyon.modulecreator.LocalizationEditor;
 
 namespace com.aoyon.modulecreator
 {   
@@ -61,7 +62,7 @@ namespace com.aoyon.modulecreator
 
             // 冒頭
             LocalizationEditor.RenderLocalize();
-            EditorGUILayout.HelpBox(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.description"), MessageType.Info);
+            EditorGUILayout.HelpBox(GetLocalizedText("Utility.ModuleCreator.description"), MessageType.Info);
             
             // 各Rendererに対するUI
             EditorGUILayout.Space();
@@ -92,10 +93,10 @@ namespace com.aoyon.modulecreator
             // オプション
             EditorGUILayout.Space();
         
-            _options.IncludePhysBone = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.PhysBoneToggle"), _options.IncludePhysBone);
+            _options.IncludePhysBone = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.PhysBoneToggle"), _options.IncludePhysBone);
 
             GUI.enabled = _options.IncludePhysBone;
-            _options.IncludePhysBoneColider = EditorGUILayout.Toggle(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.PhysBoneColiderToggle"), _options.IncludePhysBoneColider);
+            _options.IncludePhysBoneColider = EditorGUILayout.Toggle(GetLocalizedText("Utility.ModuleCreator.PhysBoneColiderToggle"), _options.IncludePhysBoneColider);
             GUI.enabled = true;
 
             EditorGUILayout.Space();
@@ -111,7 +112,7 @@ namespace com.aoyon.modulecreator
             // 実行ボタン
             EditorGUILayout.Space();
             GUI.enabled = _skinnedMeshRenderers != null & _skinnedMeshRenderers.Count() > 0;
-            if (GUILayout.Button(LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.CreateModuleButton")))
+            if (GUILayout.Button(GetLocalizedText("Utility.ModuleCreator.CreateModuleButton")))
             {
                 CreateModule();
                 Close();
@@ -122,7 +123,7 @@ namespace com.aoyon.modulecreator
 
             // 高度なオプション
             EditorGUILayout.Space();
-            _showAdvancedOptions = EditorGUILayout.Foldout(_showAdvancedOptions, LocalizationEditor.GetLocalizedText("Utility.ModuleCreator.advancedoptions"));
+            _showAdvancedOptions = EditorGUILayout.Foldout(_showAdvancedOptions, GetLocalizedText("Utility.ModuleCreator.advancedoptions"));
             if (_showAdvancedOptions)
             { 
                 GUI.enabled = _options.IncludePhysBone;
