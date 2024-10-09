@@ -61,14 +61,7 @@ jobs:
       # Build a list of .meta files for future use
       - name: Track Package Meta Files
         run: find "${{ env.packagePath }}/" -name \*.meta >> metaList
-      
-      # Make a UnityPackage version of the Package for release
-      - name: Create UnityPackage
-        uses: pCYSl5EDgo/create-unitypackage@cfcd3cf0391a5ef1306342794866a9897c32af0b
-        with:
-          package-path: ${{ env.unityPackage }}
-          include-files: metaList
-      
+             
       # Make a release tag of the version from the package.json file 
       - name: Create Tag
         id: tag_version
@@ -83,7 +76,6 @@ jobs:
         with:
           files: |
             ${{ env.zipFile }}
-            ${{ env.unityPackage }}
             ${{ env.packagePath }}/package.json
           tag_name: ${{ env.version }}
           prerelease: ${{ github.ref == 'refs/heads/dev' }}
