@@ -22,6 +22,7 @@ namespace com.aoyon.modulecreator
         public bool RemainAllPBTransforms = false;
         public bool IncludeIgnoreTransforms = false;
         public GameObject RootObject = null;
+        public string SaveName = null;
     }
 
     public class ModuleCreatorProcessor

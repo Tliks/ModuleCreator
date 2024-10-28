@@ -118,6 +118,15 @@ namespace com.aoyon.modulecreator
 
             // 実行ボタン
             EditorGUILayout.Space();
+
+            //保存名
+            using (new GUILayout.HorizontalScope())
+            {
+                _options.SaveName = EditorGUILayout.TextField(GetLocalizedText("Utility.ModuleCreator.SaveName"), _options.SaveName);
+                RenderInfo(GetLocalizedText("Utility.ModuleCreator.tooltip.IncludeIgnoreTransformsToggle"));
+            }                
+
+            // 実行ボタン
             GUI.enabled = _skinnedMeshRenderers != null & _skinnedMeshRenderers.Count() > 0;
             if (GUILayout.Button(GetLocalizedText("Utility.ModuleCreator.CreateModuleButton")))
             {
