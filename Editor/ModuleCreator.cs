@@ -116,7 +116,6 @@ namespace com.aoyon.modulecreator
             }
             GUI.enabled = true;
 
-            // 実行ボタン
             EditorGUILayout.Space();
 
             //保存名
@@ -178,61 +177,25 @@ namespace com.aoyon.modulecreator
         {
             if (_options.MergePrefab)
             {
-                string mesh_name = $"{_root.name} Parts";
-                (GameObject new_root, string variantPath) = ModuleCreatorProcessor.SaveRootObject(_root, mesh_name);
-                new_root.transform.position = Vector3.zero;
-
-                List<SkinnedMeshRenderer> newskinnedMeshRenderers = TraceObjects.TraceCopiedRenderers(_root, new_root, _skinnedMeshRenderers).ToList();
-
-                for (int i = 0; i < newskinnedMeshRenderers.Count(); i++)
-                {
-                    ProcessMesh(newskinnedMeshRenderers[i], _targetselections[i], true);
-                }
-
-                ModuleCreatorProcessor.CreateModule(new_root, newskinnedMeshRenderers, _options, _root.scene);
-                Debug.Log("Saved prefab to " + variantPath);
+                _options.SaveName = _options.SaveName != null  ? _options.SaveName : $"{_root.name} Parts";
+                ModuleCreatorProcessor.CreateMergewdeModule(_skinnedMeshRenderers, _options, _targetselections, true);
             }
             else
             {
                 if (_options.Outputunselected && _skinnedMeshRenderers.Count == 1 && _targetselections[0].Count > 0)
                 {
-                    CreateSingleModule(_skinnedMeshRenderers[0], _targetselections[0], _skinnedMeshRenderers[0].name, true);
-                    CreateSingleModule(_skinnedMeshRenderers[0], _targetselections[0], $"{_skinnedMeshRenderers[0].name} Unselected", false);
+                    _options.SaveName = _options.SaveName != null  ? _options.SaveName : _skinnedMeshRenderers[0].name;
+                    ModuleCreatorProcessor.CreateSingleModule(_skinnedMeshRenderers[0], _options, _targetselections[0], true);
+                    _options.SaveName = _options.SaveName != null  ? _options.SaveName : $"{_skinnedMeshRenderers[0].name} Unselected";
+                    ModuleCreatorProcessor.CreateSingleModule(_skinnedMeshRenderers[0], _options, _targetselections[0], false);
                     return;
                 }
 
                 for (int i = 0; i < _skinnedMeshRenderers.Count(); i++)
                 {
-                    CreateSingleModule(_skinnedMeshRenderers[i], _targetselections[i], _skinnedMeshRenderers[i].name, true);
+                    _options.SaveName = _options.SaveName != null  ? _options.SaveName : _skinnedMeshRenderers[0].name;
+                    ModuleCreatorProcessor.CreateSingleModule(_skinnedMeshRenderers[i], _options, _targetselections[i], true);
                 }
-            }
-        }
-
-        private void CreateSingleModule(SkinnedMeshRenderer skinnedMeshRenderer, IEnumerable<Vector3> positioins, string meshName, bool KeepMesh)
-        {
-            (GameObject newRoot, string variantPath) = ModuleCreatorProcessor.SaveRootObject(_root, meshName);
-            newRoot.transform.position = Vector3.zero;
-
-            var newSkinnedMeshRender = TraceObjects.TraceCopiedRenderer(_root, newRoot, skinnedMeshRenderer);
-
-            ProcessMesh(newSkinnedMeshRender, positioins, KeepMesh);
-
-            ModuleCreatorProcessor.CreateModule(newRoot, new List<SkinnedMeshRenderer> { newSkinnedMeshRender }, _options, _root.scene);
-            Debug.Log("Saved prefab to " + variantPath);
-        }
-
-        private void ProcessMesh(SkinnedMeshRenderer skinnedMeshRenderer, IEnumerable<Vector3> positioins, bool KeepMesh)
-        {
-            if (positioins.Count() > 0)
-            {
-                Mesh newMesh = KeepMesh 
-                    ? MeshHelper.KeepMesh(skinnedMeshRenderer.sharedMesh, positioins) 
-                    : MeshHelper.DeleteMesh(skinnedMeshRenderer.sharedMesh, positioins);
-
-                string path = AssetPathUtility.GenerateMeshPath(_root.name, $"{skinnedMeshRenderer.name}_modified");
-                AssetDatabase.CreateAsset(newMesh, path);
-                AssetDatabase.SaveAssets();
-                skinnedMeshRenderer.sharedMesh = newMesh;
             }
         }
 

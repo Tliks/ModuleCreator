@@ -9,6 +9,11 @@ namespace com.aoyon.modulecreator
 {
     public class TraceObjects: triangleselector.utils.TraceObjects
     {
+        public static GameObject CheckTarget(GameObject obj)
+        {
+            return CheckTargets(new List<GameObject> { obj });
+        }
+
         public static GameObject CheckTargets(IEnumerable<GameObject> objs)
         {   
             foreach (var obj in objs)

@@ -29,7 +29,7 @@ namespace com.aoyon.modulecreator
             foreach (var obj in Selection.gameObjects)
             {
                 var skinnedMeshRenderer = obj.GetComponent<SkinnedMeshRenderer>();
-                ModuleCreatorProcessor.CheckAndCopyBones(new List<SkinnedMeshRenderer> {skinnedMeshRenderer}, new ModuleCreatorOptions());
+                ModuleCreatorProcessor.CreateSingleModule(skinnedMeshRenderer, new ModuleCreatorOptions());
             }
 
             count = 0;

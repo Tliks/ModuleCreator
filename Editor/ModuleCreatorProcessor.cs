@@ -28,39 +28,39 @@ namespace com.aoyon.modulecreator
     public class ModuleCreatorProcessor
     {
         
-        public static GameObject CheckAndCopyBones(IEnumerable<SkinnedMeshRenderer> skinnedMeshRenderers, ModuleCreatorOptions settings)
-        {   
-            GameObject instance = null;
-            try
-            {
-                IEnumerable<GameObject> objs = skinnedMeshRenderers.Select(r => r.gameObject);
-                GameObject root = TraceObjects.CheckTargets(objs);
+        public static void CreateSingleModule(SkinnedMeshRenderer skinnedMeshRenderer, ModuleCreatorOptions options, IEnumerable<Vector3> positioins = null, bool KeepMesh = true)
+        {
+            GameObject root = TraceObjects.CheckTarget(skinnedMeshRenderer.gameObject);
+            (GameObject newRoot, string variantPath) = SaveRootObject(root, options.SaveName);
+            newRoot.transform.position = Vector3.zero;
 
-                string mesh_name = objs.Count() == 1 ? objs.First().name : $"{root.name} Parts";
-                (GameObject new_root, string variantPath) = SaveRootObject(root, mesh_name);
-                new_root.transform.position = Vector3.zero;
+            var newSkinnedMeshRender = TraceObjects.TraceCopiedRenderer(root, newRoot, skinnedMeshRenderer);
 
-                IEnumerable<SkinnedMeshRenderer> newskinnedMeshRenderers = TraceObjects.TraceCopiedRenderers(root, new_root, skinnedMeshRenderers);
+            ProcessMesh(newSkinnedMeshRender, positioins, KeepMesh, root.name);
 
-                CreateModule(new_root, newskinnedMeshRenderers, settings, root.scene);
-                UnityEngine.Debug.Log("Saved prefab to " + variantPath);
-
-            }
-
-            catch (InvalidOperationException ex)
-            {
-                UnityEngine.Debug.LogError("[Module Creator] " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                UnityEngine.Debug.LogError(ex.StackTrace);
-                UnityEngine.Debug.LogError(ex);
-            }
-
-            return instance;
+            CreateModuleImpl(newRoot, new List<SkinnedMeshRenderer> { newSkinnedMeshRender }, options, root.scene);
+            Debug.Log("Saved prefab to " + variantPath);
         }
 
-        public static void CreateModule(GameObject new_root, IEnumerable<SkinnedMeshRenderer> newskinnedMeshRenderers, ModuleCreatorOptions options, Scene scene)
+        public static void CreateMergewdeModule(IEnumerable<SkinnedMeshRenderer> skinnedMeshRenderers, ModuleCreatorOptions options, IEnumerable<IEnumerable<Vector3>> positioins = null, bool KeepMesh = true)
+        {
+            GameObject root = TraceObjects.CheckTargets(skinnedMeshRenderers.Select(r => r.gameObject));
+            (GameObject newRoot, string variantPath) = SaveRootObject(root, options.SaveName);
+            newRoot.transform.position = Vector3.zero;
+
+            List<SkinnedMeshRenderer> newskinnedMeshRenderers = TraceObjects.TraceCopiedRenderers(root, newRoot, skinnedMeshRenderers).ToList();
+
+            var positionsList = positioins.ToList();
+            for (int i = 0; i < newskinnedMeshRenderers.Count(); i++)
+            {
+                ProcessMesh(newskinnedMeshRenderers[i], positionsList[i], KeepMesh, root.name);
+            }
+
+            CreateModuleImpl(newRoot, newskinnedMeshRenderers, options, root.scene);
+            Debug.Log("Saved prefab to " + variantPath);
+        }
+
+        private static void CreateModuleImpl(GameObject new_root, IEnumerable<SkinnedMeshRenderer> newskinnedMeshRenderers, ModuleCreatorOptions options, Scene scene)
         {
             try
             {
@@ -135,6 +135,20 @@ namespace com.aoyon.modulecreator
 
         }
         
-        
+        private static void ProcessMesh(SkinnedMeshRenderer skinnedMeshRenderer, IEnumerable<Vector3> positioins, bool KeepMesh, string rootName)
+        {
+            if (positioins != null && positioins.Count() > 0)
+            {
+                Mesh newMesh = KeepMesh 
+                    ? MeshHelper.KeepMesh(skinnedMeshRenderer.sharedMesh, positioins) 
+                    : MeshHelper.DeleteMesh(skinnedMeshRenderer.sharedMesh, positioins);
+
+                string path = AssetPathUtility.GenerateMeshPath(rootName, $"{skinnedMeshRenderer.name}_modified");
+                AssetDatabase.CreateAsset(newMesh, path);
+                AssetDatabase.SaveAssets();
+                skinnedMeshRenderer.sharedMesh = newMesh;
+            }
+        }
+
     }
 }
