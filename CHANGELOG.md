@@ -2,19 +2,30 @@
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+ 
+### Security
+
+## [0.5.0] - 2025-04-03
+### Added
 - Add support for MeshRenderer, UnityConstraints and VRCConstraints
-- Add .meta file
 - Add contextmenu at `Tools/ModuleCreator`
     - Specify whether each component should be included in the prefab.
     - Specify whether to unpack the prefab to the origin.
+- Add .meta file
 
 ### Changed
 - The parent Prefab is now set to the original Prefab (typically the FBX) instead of the target Prefab.
     - This is intended to be used as a static asset that will not be affected by changes of other Prefabs while still maintaining a connection to the FBX.
 - When multiple renderers are selected, a prefab containing all the selected renderers is now output.
 - Complete rewrite.
-
-### Deprecated
 
 ### Removed
 - Removed the "Window/Module Creator" window.
@@ -27,8 +38,6 @@
 - Fixed an issue where prefabs could not be saved with missing components.
 - Fixed the "cyclic prefab nesting not supported" error.
  
-### Security
-
 ## [0.4.3] - 2024-07-31
 ### Deprecated
 - The ability for prefab instances to be selected during generation has been deprecated due to an error
