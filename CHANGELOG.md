@@ -2,15 +2,31 @@
 
 ## [Unreleased]
 ### Added
+- Add support for MeshRenderer, UnityConstraints and VRCConstraints
+- Add .meta file
+- Add contextmenu at `Tools/ModuleCreator`
+    - Specify whether each component should be included in the prefab.
+    - Specify whether to unpack the prefab to the origin.
 
 ### Changed
+- The parent Prefab is now set to the original Prefab (typically the FBX) instead of the target Prefab.
+    - This is intended to be used as a static asset that will not be affected by changes of other Prefabs while still maintaining a connection to the FBX.
+- When multiple renderers are selected, a prefab containing all the selected renderers is now output.
+- Complete rewrite.
 
 ### Deprecated
 
 ### Removed
+- Removed the "Window/Module Creator" window.
+- Removed the check for the existence of hips.
 
 ### Fixed
-
+- Fixed an issue where PhysBones on costumes might not work when applying the module to the original avatar with Modular Avatar.
+    - The option to automatically rename the root bone of PhysBones is now enabled by default.
+    - Note: This may lead to duplicate PhysBones.
+- Fixed an issue where prefabs could not be saved with missing components.
+- Fixed the "cyclic prefab nesting not supported" error.
+ 
 ### Security
 
 ## [0.4.3] - 2024-07-31
