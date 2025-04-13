@@ -13,6 +13,11 @@
  
 ### Security
 
+## [0.6.0] - 2025-04-13
+### Changed
+- The behavior of renaming the root transform of phybone, which was enabled by default in v0.5.0, has been disabled.
+    - Because this could cause unintended behavior, prioritize compatibility with previous versions.
+
 ## [0.5.0] - 2025-04-03
 ### Added
 - Add support for MeshRenderer, UnityConstraints and VRCConstraints
