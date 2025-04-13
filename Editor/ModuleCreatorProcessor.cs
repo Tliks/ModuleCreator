@@ -17,8 +17,8 @@ namespace com.aoyon.modulecreator
 
         public string SaveName;
 
-        public bool UnpackPrefabToOrigin = true;
-        public bool RenameRootTransform = true;
+        public bool UnpackPrefabToOrigin;
+        public bool RenameRootTransform;
 
         public ModuleCreatorOptions()
         {            
@@ -27,7 +27,7 @@ namespace com.aoyon.modulecreator
             IncludeConstraints = ModuleCreatorSettings.IncludeConstraints;
             SaveName = "";
             UnpackPrefabToOrigin = ModuleCreatorSettings.UnpackPrefabToOrigin;
-            RenameRootTransform = true;
+            RenameRootTransform = false;
         }
     }
 
