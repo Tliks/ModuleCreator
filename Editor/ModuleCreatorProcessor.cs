@@ -65,7 +65,7 @@ namespace com.aoyon.modulecreator
             var tmpRoot = GetTmpRoot(root);
 
             RemoveMissingScripts(tmpRoot);
-            if (PrefabUtility.IsPartOfAnyPrefab(tmpRoot) && ModuleCreatorSettings.UnpackPrefabToOrigin) {
+            if (PrefabUtility.IsPartOfAnyPrefab(tmpRoot) && options.UnpackPrefabToOrigin) {
                 UnpackPrefabToOrigin(tmpRoot);
             }
 
