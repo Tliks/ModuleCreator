@@ -15,14 +15,18 @@
 
 ## [0.6.1] - 2025-04-25
 ### Added
-- Add Japanese changelog.
+- 日本語の変更履歴の追加。
 
 ### Changed
-- Improved performance.
+- パフォーマンスを改善。
 
 ### Fixed
-- Fixed the name of the Prefab when a single renderer was selected.
-- Fixed processing related to PhysBone's IgnoreTransforms.
+- 単一のレンダラーを選択していた際のPrefabの名称を修正。 
+- PhysBoneのIgnoreTransformsに関する処理を修正。
+
+
+## 以下のリリースに日本語の変更履歴はありません。
+
 
 ## [0.6.0] - 2025-04-13
 ### Changed
