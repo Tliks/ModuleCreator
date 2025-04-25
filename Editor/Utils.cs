@@ -21,7 +21,7 @@ namespace com.aoyon.modulecreator
     internal static class VRCExtensions
     {
         public static Transform GetTarget(this VRCPhysBoneBase physBone) => physBone.rootTransform == null ? physBone.transform : physBone.rootTransform;
-        public static Transform GetTarget(this VRCPhysBoneColliderBase physBone) => physBone.rootTransform == null ? physBone.transform : physBone.rootTransform;
+        public static Transform GetTarget(this VRCPhysBoneColliderBase colider) => colider.rootTransform == null ? colider.transform : colider.rootTransform;
         public static Transform GetTarget(this VRCConstraintBase constraint) => constraint.TargetTransform == null ? constraint.transform : constraint.TargetTransform;
     }
 
