@@ -43,6 +43,14 @@ namespace com.aoyon.modulecreator
 
     internal class RendererDepedencyProvider
     {
+        private static IComponentDependency[] _providers;
+
+        [InitializeOnLoadMethod]
+        static void Init()
+        {
+            _providers = Utils.GetImplementClasses<IComponentDependency>();
+        }
+
         private readonly RendererDepedencyProviderContext _context;
         
         public RendererDepedencyProvider(RendererDepedencyProviderContext context)
@@ -57,8 +65,7 @@ namespace com.aoyon.modulecreator
             dependencies.UnionWith(_context.WeightedBones.Select(t => (Component)t).ToHashSet());
 
             var collector = new RendererDepedencyCollector(dependencies);
-            var providers = Utils.GetImplementClasses<IComponentDependency>();
-            foreach (var provider in providers)
+            foreach (var provider in _providers)
             {
                 if (!provider.IsEnabled(_context)) continue;
                 provider.AddDependency(_context, collector);

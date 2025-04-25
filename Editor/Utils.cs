@@ -11,9 +11,8 @@ namespace com.aoyon.modulecreator
     {
         public static T[] GetImplementClasses<T>() where T : class
         {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => typeof(T).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+            return TypeCache.GetTypesDerivedFrom<T>()
+                .Where(type => typeof(T).IsAssignableFrom(type) && !type.IsAbstract && !type.IsGenericTypeDefinition)
                 .Select(type => Activator.CreateInstance(type) as T)
                 .ToArray();
         }
