@@ -43,6 +43,14 @@ namespace com.aoyon.modulecreator
 
     internal class RendererDepedencyProvider
     {
+        private static IComponentDependency[] _providers;
+
+        [InitializeOnLoadMethod]
+        static void Init()
+        {
+            _providers = Utils.GetImplementClasses<IComponentDependency>();
+        }
+
         private readonly RendererDepedencyProviderContext _context;
         
         public RendererDepedencyProvider(RendererDepedencyProviderContext context)
@@ -57,8 +65,7 @@ namespace com.aoyon.modulecreator
             dependencies.UnionWith(_context.WeightedBones.Select(t => (Component)t).ToHashSet());
 
             var collector = new RendererDepedencyCollector(dependencies);
-            var providers = Utils.GetImplementClasses<IComponentDependency>();
-            foreach (var provider in providers)
+            foreach (var provider in _providers)
             {
                 if (!provider.IsEnabled(_context)) continue;
                 provider.AddDependency(_context, collector);
@@ -172,7 +179,6 @@ namespace com.aoyon.modulecreator
         private static HashSet<Transform> GetWeightedPhysBoneObjects(VRCPhysBone physBone, HashSet<Transform> weightedBones)
         {
             var WeightedPhysBoneObjects = new HashSet<Transform>();
-            var ignoreTransforms = GetIgnoreTransforms(physBone);
 
             var allchildren = UnityUtils.GetAllChildren(physBone.GetTarget());
 
@@ -181,7 +187,7 @@ namespace com.aoyon.modulecreator
                 if (weightedBones.Contains(child))
                 {
                     var result = new HashSet<Transform>();
-                    SingleChainRecursive(child, ignoreTransforms, result);
+                    SingleChainRecursive(child, result);
                     WeightedPhysBoneObjects.UnionWith(result);
                 }
             }
@@ -189,29 +195,14 @@ namespace com.aoyon.modulecreator
             return WeightedPhysBoneObjects;
         }
 
-        private static void SingleChainRecursive(Transform transform, HashSet<Transform> ignoreTransforms, HashSet<Transform> result)
+        private static void SingleChainRecursive(Transform transform, HashSet<Transform> result)
         {   
-            if (ignoreTransforms.Contains(transform)) return;
             result.Add(transform);   
             if (transform.childCount == 1)
             {
                 Transform child = transform.GetChild(0);
-                SingleChainRecursive(child, result, ignoreTransforms);
+                SingleChainRecursive(child, result);
             }
-        }
-
-        private static HashSet<Transform> GetIgnoreTransforms(VRCPhysBone physBone)
-        {
-            HashSet<Transform> AffectedIgnoreTransforms = new HashSet<Transform>();
-
-            foreach (Transform ignoreTransform in physBone.ignoreTransforms)
-            {   
-                if (ignoreTransform == null) continue;
-                Transform[] AffectedIgnoreTransform = UnityUtils.GetAllChildren(ignoreTransform);
-                AffectedIgnoreTransforms.UnionWith(AffectedIgnoreTransform);
-            }
-
-            return AffectedIgnoreTransforms;
         }
     }
 

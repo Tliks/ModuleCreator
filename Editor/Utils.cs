@@ -11,9 +11,8 @@ namespace com.aoyon.modulecreator
     {
         public static T[] GetImplementClasses<T>() where T : class
         {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(assembly => assembly.GetTypes())
-                .Where(type => typeof(T).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
+            return TypeCache.GetTypesDerivedFrom<T>()
+                .Where(type => typeof(T).IsAssignableFrom(type) && !type.IsAbstract && !type.IsGenericTypeDefinition)
                 .Select(type => Activator.CreateInstance(type) as T)
                 .ToArray();
         }
@@ -22,7 +21,7 @@ namespace com.aoyon.modulecreator
     internal static class VRCExtensions
     {
         public static Transform GetTarget(this VRCPhysBoneBase physBone) => physBone.rootTransform == null ? physBone.transform : physBone.rootTransform;
-        public static Transform GetTarget(this VRCPhysBoneColliderBase physBone) => physBone.rootTransform == null ? physBone.transform : physBone.rootTransform;
+        public static Transform GetTarget(this VRCPhysBoneColliderBase colider) => colider.rootTransform == null ? colider.transform : colider.rootTransform;
         public static Transform GetTarget(this VRCConstraintBase constraint) => constraint.TargetTransform == null ? constraint.transform : constraint.TargetTransform;
     }
 
