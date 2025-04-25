@@ -35,18 +35,21 @@ namespace com.aoyon.modulecreator
     {
         public static GameObject CreateModule(GameObject target, ModuleCreatorOptions options)
         {
-            if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = target.name;
+            var root = GetRoot(target);
+            if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = $"{root.name} {target.name}";
             return CreateModule(new GameObject[]{ target }, options);
         }
         
         public static GameObject CreateModule(Renderer renderer, ModuleCreatorOptions options)
         {
-            if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = renderer.name;
+            var root = GetRoot(renderer.gameObject);
+            if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = $"{root.name} {renderer.name}";
             return CreateModule(new Renderer[]{ renderer }, options);
         }
 
         public static GameObject CreateModule(GameObject[] targets, ModuleCreatorOptions options)
         {
+            if (targets.Length == 1) return CreateModule(targets[0], options);
             if (!TryGetCommonRoot(targets, out var root)) throw new InvalidOperationException("Please select the objects that have a common parent");
             var renderers = targets.Select(t => t.GetComponent<Renderer>()).Where(r => r != null).ToArray();
             if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = $"{root.name} Parts";
@@ -55,6 +58,7 @@ namespace com.aoyon.modulecreator
 
         public static GameObject CreateModule(Renderer[] renderers, ModuleCreatorOptions options)
         {
+            if (renderers.Length == 1) return CreateModule(renderers[0], options);
             if (!TryGetCommonRoot(renderers.Select(t => t.gameObject), out var root)) throw new InvalidOperationException("Please select the objects that have a common parent");
             if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = $"{root.name} Parts";
             return CreateModuleImpl(root, renderers, options);
