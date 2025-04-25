@@ -36,15 +36,16 @@ namespace com.aoyon.modulecreator
         public static GameObject CreateModule(GameObject target, ModuleCreatorOptions options)
         {
             var root = GetRoot(target);
+            var renderer = target.GetComponent<Renderer>();
             if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = $"{root.name} {target.name}";
-            return CreateModule(new GameObject[]{ target }, options);
+            return CreateModuleImpl(root, new Renderer[]{ renderer }, options);
         }
         
         public static GameObject CreateModule(Renderer renderer, ModuleCreatorOptions options)
         {
             var root = GetRoot(renderer.gameObject);
             if (string.IsNullOrEmpty(options.SaveName)) options.SaveName = $"{root.name} {renderer.name}";
-            return CreateModule(new Renderer[]{ renderer }, options);
+            return CreateModuleImpl(root, new Renderer[]{ renderer }, options);
         }
 
         public static GameObject CreateModule(GameObject[] targets, ModuleCreatorOptions options)
