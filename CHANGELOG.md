@@ -13,6 +13,10 @@
  
 ### Security
 
+## [0.6.2] - 2025-10-16
+### Fixed
+- Fixed an issue where PhysBones or Constraints with weighted root Transforms were mistakenly deleted.
+
 ## [0.6.1] - 2025-04-25
 ### Added
 - Add Japanese changelog.
