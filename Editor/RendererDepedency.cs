@@ -179,15 +179,16 @@ namespace com.aoyon.modulecreator
         private static HashSet<Transform> GetWeightedPhysBoneObjects(VRCPhysBone physBone, HashSet<Transform> weightedBones)
         {
             var WeightedPhysBoneObjects = new HashSet<Transform>();
+            
+            var pbTarget = physBone.GetTarget();
+            var affectedTransforms = new[] { pbTarget }.Concat(UnityUtils.GetAllChildren(pbTarget));
 
-            var allchildren = UnityUtils.GetAllChildren(physBone.GetTarget());
-
-            foreach (Transform child in allchildren)
+            foreach (Transform affectedTransform in affectedTransforms)
             {
-                if (weightedBones.Contains(child))
+                if (weightedBones.Contains(affectedTransform))
                 {
                     var result = new HashSet<Transform>();
-                    SingleChainRecursive(child, result);
+                    SingleChainRecursive(affectedTransform, result);
                     WeightedPhysBoneObjects.UnionWith(result);
                 }
             }
@@ -255,7 +256,8 @@ namespace com.aoyon.modulecreator
                 foreach (var information in informations)
                 {   
                     // 残すべきcontraintかどうかの判定
-                    if (information.TargetChildren.Overlaps(validBones))
+                    // target自身、またはその子供がvalidBonesに含まれるかチェック
+                    if (validBones.Contains(information.Target) || information.TargetChildren.Overlaps(validBones))
                     {
                         collector.AddDependency(information.Target);
 
